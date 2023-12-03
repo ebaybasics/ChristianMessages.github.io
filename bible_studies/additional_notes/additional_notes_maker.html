@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>template_maker</title>
+    <link rel="stylesheet" href="https://showtimesteamers.com/css/styles.css">
+    <style>
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <a href="https://showtimesteamers.com"> Home </a>
+    <form id="inputForm">
+        <label for="userInput">Enter page name: </label>
+        <input type="text" id="userInput">
+        <button type="submit">Submit</button>
+    </form>
+    <a id="userLink"></a>
+    <h1 id="userTitle"></h1>
+    <h3 id="userSubtitle"></h3>
+    <button onclick="addTableSection()">Add Table Section</button>
+    <div id="table-sections"></div>
+    <button onclick="addUnsortedReference()">Add Unsorted Reference</button>
+    <ul id="unsorted-references"></ul>
+    <button onclick="addNote()">Add Note</button>
+    <ul id="other-notes"></ul>
+    <label for="free-writing">Free Writing Thoughts:</label>
+    <textarea id="free-writing"></textarea>
+    <button id="saveBtn">Save as HTML</button>
+    <script>
+        document.getElementById('inputForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userInput = document.getElementById('userInput').value;
+            document.getElementById('userLink').setAttribute('href', `../${userInput}.html`);
+            document.getElementById('userLink').textContent = userInput;
+            document.getElementById('userTitle').textContent = userInput;
+            document.getElementById('userSubtitle').textContent = 'Flagship Verse';
+        });
+
+        function addTableSection() {
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Topic</th>
+                        <th>Context</th>
+                        <th>Reference</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            const addButton = document.createElement('button');
+            addButton.textContent = 'Add Row';
+            addButton.onclick = () => addRow(table.querySelector('tbody'));
+
+            const container = document.createElement('div');
+            container.append(table, addButton);
+            document.getElementById('table-sections').appendChild(container);
+        }
+
+        function addRow(tbody) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input type="text" /></td>
+                <td><input type="text" /></td>
+                <td><input type="text" /></td>
+            `;
+            tbody.appendChild(row);
+        }
+
+        function addUnsortedReference() {
+            const li = document.createElement('li');
+            li.innerHTML = `<input type="text" />`;
+            document.getElementById('unsorted-references').appendChild(li);
+        }
+
+        function addNote() {
+            const li = document.createElement('li');
+            li.innerHTML = `<input type="text" style="width: 100%;" />`;
+            document.getElementById('other-notes').appendChild(li);
+        }
+
+        document.getElementById('saveBtn').addEventListener('click', function() {
+            const userContent = generateUserContent();
+            const blob = new Blob([userContent], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'user-output.html';
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+
+        function generateUserContent() {
+            const userInput = document.getElementById('userInput').value;
+            const userTitle = document.getElementById('userTitle').textContent;
+            const userSubtitle = document.getElementById('userSubtitle').textContent;
+            const freeWriting = document.getElementById('free-writing').value;
+
+            return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>${userInput}</title>
+        </head>
+        <body>
+            <h1>${userTitle}</h1>
+            <h3>${userSubtitle}</h3>
+            <h4>Free Writing Thoughts:</h4>
+            <p>${freeWriting}</p>
+        </body>
+        </html>
+            `;
+        }
+    </script>
+</body>
+</html>
+
+

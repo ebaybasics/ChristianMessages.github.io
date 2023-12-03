@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <a href="../index.html"> Home </a>
+    <a href="./additional_notes/answer_the_call_notes.html"> Additional Notes </a>
+    <h1> Answer the Call: </h1>
+    <h3> Php 3:14 "I press toward the mark for the prize <span class="highlight">of the high calling of God</span> in Christ Jesus. " </h3>
+    <ul>
+
+        <h2>Who is the call for?</h2>
+        <ul>
+            <li><span class="highlight">The calling is for everyone </span> Paul could of said "my high calling" <b>Our text Php 3:13b "...<span class="sub_highlight enlarge_text">of</span> the high calling of God..."</b></li>
+            <li><span class="highlight">The Calling is for you </span> (drove into the parking lot)</li>
+        </ul>
+        <ul>
+        <h2>What is the Calling?</h2>
+            <li><span class="highlight">Bring forth fruit </span><b>Rom 7:4  Wherefore, my brethren, ye also are become dead to the law by the body of Christ; that ye should be married to another, even to him who is raised from the dead, that we should bring forth fruit unto God. </b></li>
+            <ul>
+                <li>Bring forth fruit: Sanctification</li>
+                <li>Bring forth fruit: Not forsaking the assembling of eachother</li>
+                <li>Bring forth fruit: Serving right where you are at...</li>
+            </ul>
+
+            <li><span class="sub_highlight">Serve right where you're at</span> (if your a member here, God has called you here)<b>Eph 4:4  There is one body, and one Spirit, even as ye are called in one hope of your calling; </b></li>
+            <ul>
+                <li> Bus Ministry</li>
+                <li> Spanish Ministry</li>
+                <li> Around the church</li>
+            </ul>
+        </ul>
+        <ul>
+        <h2>Rewards for answering the call</h2>
+            <li><span class="highlight">Blessed by God </span><b>Jas 1:25  But whoso looketh into the perfect law of liberty, and continueth therein, he being not a forgetful hearer, but a doer of the work, this man shall be blessed in his deed. </b></li>
+            <li><span class="highlight">You will have the ear of God </span><b>1Jn 3:22  And whatsoever we ask, we receive of him, because we keep his commandments, and do those things that are pleasing in his sight. </b></li>
+        </ul>
+        <h2>Consequences for ignoring the call</h2>
+            <li><span class="highlight">Blessed by God </span><b>Jas 1:25  But whoso looketh into the perfect law of liberty, and continueth therein, he being not a forgetful hearer, but a doer of the work, this man shall be blessed in his deed. </b></li>
+            <li><span class="highlight">You will have the ear of God </span><b>1Jn 3:22  And whatsoever we ask, we receive of him, because we keep his commandments, and do those things that are pleasing in his sight. </b></li>
+        </ul>
+        <ul>
+        <h2>Closing:</h2>
+            <li><span class="highlight">Closing Sentence #1</span></li>
+            <li><span class="highlight">Closing Sentence #2</span></li>
+            <li><span class="highlight">Closign Sentence #3</span></li>
+
+        </ul>
+
+    </ul>
+
+
+</body>
+</html>
+        addSectionBtn.addEventListener('click', () => {
+            const section = document.createElement('div');
+            section.innerHTML = `
+                <h2><input type="text" placeholder="Enter section title"></h2>
+                <button class="add-row-btn">Add Row</button>
+                <ul class="rows-container"></ul>
+            `;
+
+            section.querySelector('.add-row-btn').addEventListener('click', () => {
+                const newRow = document.createElement('li');
+                newRow.innerHTML = `
+                    <input type="text" placeholder="Topic">
+                    <input type="text" placeholder="Context">
+                    <input type="text" placeholder="Reference">
+                    <button class="delete-row-btn">Delete Row</button>
+                `;
+
+                newRow.querySelector('.delete-row-btn').addEventListener('click', () => {
+                    newRow.remove();
+                });
+
+                section.querySelector('.rows-container').appendChild(newRow);
+            });
+
+            sectionsContainer.appendChild(section);
+        });
+
+
+        saveBtn.addEventListener('click', () => {
+            const title = titleInput.value || 'Untitled';
+            const flagshipVerse = flagshipVerseInput.value || 'No flagship verse provided';
+            let htmlContent = `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${title}</title>
+                </head>
+                <body>
+                    <h1>${title}</h1>
+                    <h3>${flagshipVerse}</h3>
+            `;
+
+            sectionsContainer.querySelectorAll('div').forEach(section => {
+                const sectionTitle = section.querySelector('h2 input').value || 'Untitled Section';
+                htmlContent += `<h2>${sectionTitle}</h2><ul>`;
+                section.querySelectorAll('.rows-container li').forEach(row => {
+                    const topic = row.children[0].value || '';
+                    const context = row.children[1].value || '';
+                    const reference = row.children[2].value || '';
+                    htmlContent += `<li><span class="highlight">${topic}</span> ${context} <b>${reference}</b></li>`;
+                });
+                htmlContent += '</ul>';
+            });
+
+            htmlContent += '</body></html>';
+
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${title}.html`;
+            link.style.display = 'none'; // Add this line to hide the link
+            document.body.appendChild(link); // Add this line to append the link to the document
+            link.click();
+            document.body.removeChild(link); // Add this line to remove the link from the document
+            URL.revokeObjectURL(url);
+        });

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script>
+        function createOutlineSection(title, items) {
+            return `
+                <h2>${title}</h2>
+                <ul>
+                    ${items.map(item => `
+                        <li>
+                            <span class="highlight">${item.highlight}</span> ${item.text} <b>${item.reference}</b>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const outlineData = [
+                {
+                    title: 'Intro',
+                    items: [
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        },
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        },
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        }
+                        // Add other items for this section
+                    ]
+                },
+                {
+                    title: 'Topic 1',
+                    items: [
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        },
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        },
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        }
+                        // Add other items for this section
+                    ]
+                },
+                {
+                    title: 'Topic 2',
+                    items: [
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        },
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        },
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        }
+                        // Add other items for this section
+                    ]
+                },
+                {
+                    title: 'Topic 3',
+                    items: [
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        },
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        },
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        }
+                        // Add other items for this section
+                    ]
+                },
+                {
+                    title: 'Close',
+                    items: [
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        },
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        },
+                        {
+                            highlight: 'Main Idea',
+                            text: '(Brief Explanation)',
+                            reference: 'Biblical Reference'
+                        }
+                        // Add other items for this section
+                    ]
+                }
+                // Add other sections
+            ];
+
+            const outlineContainer = document.querySelector('#outline');
+            outlineData.forEach(section => {
+                outlineContainer.innerHTML += createOutlineSection(section.title, section.items);
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Title</h1>
+    <h3>Verse</h3>
+    <div id="outline"></div>
+    <!-- Rest of your HTML content -->
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <a href="../index.html"> Home </a>
+    <h1> Title:</h1>
+    <input id="title-input" type="text" placeholder="Enter the title">
+
+    <h2>Sections</h2>
+    <button id="add-section-btn">Add Section</button>
+    <div id="sections-container"></div>
+    <button id="save-btn">Save</button>
+
+    <script>
+        const titleInput = document.getElementById('title-input');
+        const addSectionBtn = document.getElementById('add-section-btn');
+        const sectionsContainer = document.getElementById('sections-container');
+        const saveBtn = document.getElementById('save-btn');
+
+        addSectionBtn.addEventListener('click', () => {
+            const section = document.createElement('div');
+            section.innerHTML = `
+                <h2><input type="text" placeholder="Enter section title"></h2>
+                <button class="add-row-btn">Add Row</button>
+                <ul class="rows-container"></ul>
+            `;
+
+            section.querySelector('.add-row-btn').addEventListener('click', () => {
+                const newRow = createNewRow();
+                section.querySelector('.rows-container').appendChild(newRow);
+            });
+
+            sectionsContainer.appendChild(section);
+        });
+
+        saveBtn.addEventListener('click', () => {
+            const title = titleInput.value || 'Untitled';
+            let htmlContent = `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${title}</title>
+                    <link rel="stylesheet" href="https://showtimesteamers.com/css/styles.css">
+                </head>
+                <body>
+                    <a href="https://showtimesteamers.com"> Home </a>
+                    <h1>${title}</h1>
+            `;
+
+            sectionsContainer.querySelectorAll('div').forEach(section => {
+                const sectionTitle = section.querySelector('h2 input').value || 'Untitled Section';
+                htmlContent += `<h2>${sectionTitle}</h2><ul>`;
+                section.querySelectorAll('.rows-container li').forEach(row => {
+                    const topic = row.children[0].value || '';
+                    const spaces = '&nbsp;'.repeat(7);
+                    const blankLine = '_'.repeat(15);
+                    htmlContent += `<li>${topic}${spaces}${blankLine}</li>`;
+                });
+                htmlContent += '</ul>';
+            });
+
+            htmlContent += '</body></html>';
+
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${title}.html`;
+            link.style.display = 'none'; // Add this line to hide the link
+            document.body.appendChild(link); // Add this line to append the link to the document
+            link.click();
+            document.body.removeChild(link); // Add this line to remove the link from the document
+            URL.revokeObjectURL(url);
+        });
+
+        function createNewRow() {
+            const newRow = document.createElement('li');
+            newRow.innerHTML = `
+                <input type="text" placeholder="Topic">
+            `;
+
+            return newRow;
+        }
+    </script>
+</body>
+</html>

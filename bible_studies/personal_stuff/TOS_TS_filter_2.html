@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<a href="/index.html"> Home </a>
+<p>
+"    #TS Strategy_V9 Created by Christopher84 08/10/2021
+#Modified 05/23/2022 to include Chart Bubbles and Labels.
+#Modified 05/25/2022 to include Targets and Stoplosses.
+#Modified 05/26/2022 to include Line Labels by Dcstocks
+#Modified 05/27/2022 to include target 7.
+#Ehler's Distant Coefficient Filter Strategy Created by Christopher84 05/17/2022
+
+input coloredCandlesOn = no;
+input show_3x = yes;
+input length = 23;
+input lengthE2 = 23;
+
+input ATRPeriod = 11;
+input ATRPeriod2 = 11;
+input ATRPeriod3 = 11;
+
+input ATRFactor = 2.2;
+input ATRFactor2 = 2.2;
+input ATRFactor3 = 2.2;
+
+input AutoAgg = yes;
+input AutoAgg2 = yes;
+
+input ag_skip = no;
+input ag_skip2 = no;
+
+input Manual_Ag2 = {"1 min", "2 min", "3 min", "5 min",default "10 min", "15 min", "30 min", "1 hour", "2 hours", "4 hours", "Day", "Week", "Month"};
+input Manual_Ag3 = {"1 min", "2 min", default "3 min", "5 min", "10 min", "15 min", "30 min", "1 hour", "2 hours", "4 hours", "Day", "Week", "Month"};
+
+input bars_back = 10;
+
+input tradeDaytimeOnly = no; #hint tradeDaytimeOnly: (IntraDay Only) Only perform trades during hours stated
+input tradeDaytimeOnly2 = no; #hint tradeDaytimeOnly2: (IntraDay Only) Only perform trades during hours stated
+input tradeDaytimeOnly3 = no; #hint tradeDaytimeOnly3: (IntraDay Only) Only perform trades during hours stated
+
+input OpenTime = 0930; #hint OpenTime: Opening time of market
+input OpenTime2 = 0930; #hint OpenTime2: Opening time of market
+input OpenTime3 = 0930;
+
+input CloseTime = 1600; #hint CloseTime: Closing time of market
+input CloseTime2 = 1600; #hint CloseTime2: Closing time of market
+input CloseTime3 = 1600; #hint CloseTime2: Closing time of market
+
+input trailType = {default modified, unmodified};
+input trailType2 = {default modified2, unmodified2};
+input trailType3 = {default modified3, unmodified3};
+
+input firstTrade = {default long, short};
+input firstTrade2 = {default long2, short2};
+input firstTrade3 = {default long3, short3};
+
+input averageType = AverageType.SIMPLE;
+input averageType2 = AverageType.SIMPLE;
+input averageType3 = AverageType.SIMPLE;
+
+input Show_Auto_Skip_Label = yes;
+
+input Market_Open_Lbl = no;
+input Market_Open_Lbl2 = no;
+input Market_Open_Lbl3 = no;
+
+input Tick_Size_Lbl =  no;
+input Tick_Size_Lbl2 = no;
+input Tick_Size_Lbl3 = no;
+
+input Long_Short_Lbl =  no;
+input Long_Short_Lbl2 = no;
+input Long_Short_Lbl3 = no;
+
+input Closed_Orders_Lbl =  yes;
+input Closed_Orders_Lbl2 = yes;
+input Closed_Orders_Lbl3 = yes;
+
+input Profit_Lbl =  no;
+input Profit_Lbl2 = no;
+input Profit_Lbl3 = no;
+
+input PL_Lbl = no;
+input PL_Lbl2 = no;
+input PL_Lbl3 = no;
+
+input Max_Lbl =  no;
+input Max_Lbl2 = no;
+input Max_Lbl3 = no;
+
+input Open_Trades_Lbl =  no;
+input Open_Trades_Lbl2 = no;
+input Open_Trades_Lbl3 = no;
+
+input Profit_Pct_Lbl =  no;
+input Profit_Pct_Lbl2 = no;
+input Profit_Pct_Lbl3 = no;
+
+input Avg_Per_Lbl =  no;
+input Avg_Per_Lbl2 = no;
+input Avg_Per_Lbl3 = no;
+
+input LabelsOn = yes;
+input LabelsOn2 = yes;
+input LabelsOn3 = yes;
+
+def agperiod1 = GetAggregationPeriod();
+def agperiod2 = if AutoAgg == yes and ag_skip == no and agperiod1 == AggregationPeriod.MIN then AggregationPeriod.two_MIN
+           else if AutoAgg == yes and ag_skip == yes and agperiod1 == AggregationPeriod.MIN then AggregationPeriod.three_MIN
+           else if AutoAgg == yes and ag_skip == no and agperiod1 == AggregationPeriod.two_MIN then AggregationPeriod.three_MIN
+           else if AutoAgg == yes and ag_skip == yes and agperiod1 == AggregationPeriod.two_MIN then AggregationPeriod.five_MIN
+           else if AutoAgg == yes and ag_skip == no and agperiod1 == AggregationPeriod.three_MIN then AggregationPeriod.five_MIN
+           else if AutoAgg == yes and ag_skip == yes and agperiod1 == AggregationPeriod.three_MIN then AggregationPeriod.ten_MIN
+           else if AutoAgg == yes and ag_skip == no and agperiod1 == AggregationPeriod.five_MIN then AggregationPeriod.ten_MIN
+           else if AutoAgg == yes and ag_skip == yes and agperiod1 == AggregationPeriod.five_MIN then AggregationPeriod.fifteen_MIN
+           else if AutoAgg == yes and ag_skip == no and agperiod1 == AggregationPeriod.ten_MIN then AggregationPeriod.fifteen_MIN
+           else if AutoAgg == yes and ag_skip == yes and agperiod1 == AggregationPeriod.ten_MIN then AggregationPeriod.thirty_MIN
+           else if AutoAgg == yes and ag_skip == no and agperiod1 == AggregationPeriod.fifteen_MIN then AggregationPeriod.thirty_MIN
+           else if AutoAgg == yes and ag_skip == yes and agperiod1 == AggregationPeriod.fifteen_MIN then AggregationPeriod.HOUR
+           else if AutoAgg == yes and ag_skip == no and agperiod1 == AggregationPeriod.thirty_MIN then AggregationPeriod.hour
+           else if AutoAgg == yes and ag_skip == yes and agperiod1 == AggregationPeriod.thirty_MIN then AggregationPeriod.two_hours
+           else if AutoAgg == yes and ag_skip == no and agperiod1 == AggregationPeriod.hour then AggregationPeriod.two_hours
+           else if AutoAgg == yes and ag_skip == yes and agperiod1 == AggregationPeriod.HOUR then AggregationPeriod.four_hours
+           else if AutoAgg == yes and ag_skip == no and agperiod1 == AggregationPeriod.two_hours then AggregationPeriod.four_hours
+           else if AutoAgg == yes and ag_skip == yes and agperiod1 == AggregationPeriod.two_HOURS then AggregationPeriod.Day
+           else if AutoAgg == yes and ag_skip == no and agperiod1 == AggregationPeriod.four_hours then AggregationPeriod.day
+           else if AutoAgg == yes and ag_skip == yes and agperiod1 == AggregationPeriod.four_HOURS then AggregationPeriod.Week
+           else if AutoAgg == yes and ag_skip == no and agperiod1 == AggregationPeriod.day then AggregationPeriod.week
+           else if AutoAgg == yes and ag_skip == yes and agperiod1 == AggregationPeriod.day then AggregationPeriod.month
+           else if AutoAgg == yes and ag_skip == no and agperiod1 == AggregationPeriod.week then AggregationPeriod.month
+           else if AutoAgg == no then Manual_Ag2 else AggregationPeriod.thirty_MIN;
+
+def agperiod3 = if AutoAgg2 == yes and ag_skip2 == no and agperiod2 == AggregationPeriod.MIN then AggregationPeriod.two_MIN
+           else if AutoAgg2 == yes and ag_skip2 == yes and agperiod2 == AggregationPeriod.MIN then AggregationPeriod.three_MIN
+           else if AutoAgg2 == yes and ag_skip2 == no and agperiod2 == AggregationPeriod.two_MIN then AggregationPeriod.three_MIN
+           else if AutoAgg2 == yes and ag_skip2 == yes and agperiod2 == AggregationPeriod.two_MIN then AggregationPeriod.five_MIN
+           else if AutoAgg2 == yes and ag_skip2 == no and agperiod2 == AggregationPeriod.three_MIN then AggregationPeriod.five_MIN
+           else if AutoAgg2 == yes and ag_skip2 == yes and agperiod2 == AggregationPeriod.three_MIN then AggregationPeriod.ten_MIN
+           else if AutoAgg2 == yes and ag_skip2 == no and agperiod2 == AggregationPeriod.five_MIN then AggregationPeriod.ten_MIN
+           else if AutoAgg2 == yes and ag_skip2 == yes and agperiod2 == AggregationPeriod.five_MIN then AggregationPeriod.fifteen_MIN
+           else if AutoAgg2 == yes and ag_skip2 == no and agperiod2 == AggregationPeriod.ten_MIN then AggregationPeriod.fifteen_MIN
+           else if AutoAgg2 == yes and ag_skip2 == yes and agperiod2 == AggregationPeriod.ten_MIN then AggregationPeriod.thirty_MIN
+           else if AutoAgg2 == yes and ag_skip2 == no and agperiod2 == AggregationPeriod.fifteen_MIN then AggregationPeriod.thirty_MIN
+           else if AutoAgg2 == yes and ag_skip2 == yes and agperiod2 == AggregationPeriod.fifteen_MIN then AggregationPeriod.HOUR
+           else if AutoAgg2 == yes and ag_skip2 == no and agperiod2 == AggregationPeriod.thirty_MIN then AggregationPeriod.hour
+           else if AutoAgg2 == yes and ag_skip2 == yes and agperiod2 == AggregationPeriod.thirty_MIN then AggregationPeriod.two_hours
+           else if AutoAgg2 == yes and ag_skip2 == no and agperiod2 == AggregationPeriod.hour then AggregationPeriod.two_hours
+           else if AutoAgg2 == yes and ag_skip2 == yes and agperiod2 == AggregationPeriod.HOUR then AggregationPeriod.four_hours
+           else if AutoAgg2 == yes and ag_skip2 == no and agperiod2 == AggregationPeriod.two_hours then AggregationPeriod.four_hours
+           else if AutoAgg2 == yes and ag_skip2 == yes and agperiod2 == AggregationPeriod.two_HOURS then AggregationPeriod.Day
+           else if AutoAgg2 == yes and ag_skip2 == no and agperiod2 == AggregationPeriod.four_hours then AggregationPeriod.day
+           else if AutoAgg2 == yes and ag_skip2 == yes and agperiod2 == AggregationPeriod.four_HOURS then AggregationPeriod.Week
+           else if AutoAgg2 == yes and ag_skip2 == no and agperiod2 == AggregationPeriod.day then AggregationPeriod.week
+           else if AutoAgg2 == yes and ag_skip2 == yes and agperiod2 == AggregationPeriod.day then AggregationPeriod.month
+           else if AutoAgg2 == no then Manual_Ag3 else AggregationPeriod.Hour;
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+def high2 = high(period = agperiod2);
+def low2 = low(period = agperiod2);
+def close2 = close(period = agperiod2);
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+input showSignals = yes; #hint showSignals: show buy and sell arrows
+input showSignals2 = yes; #hint showSignals2: show buy and sell arrows
+input showSignals3 = yes; #hint showSignals3: show buy and sell arrows
+
+input LongTrades = yes; #hint LongTrades: perform long trades
+input LongTrades2 = yes; #hint LongTrades2: perform long trades
+input LongTrades3 = yes; #hint LongTrades3: perform long trades
+
+input ShortTrades = yes; #hint ShortTrades: perform short trades
+input ShortTrades2 = yes; #hint ShortTrades2: perform short trades
+input ShortTrades3 = yes; #hint ShortTrades3: perform short trades
+
+input showLabels  = yes; #hint showLabels: show PL labels at top
+input showLabels2 = yes; #hint showLabels3: show PL labels at top
+input showLabels3 = yes; #hint showLabels3: show PL labels at top
+
+input useStops = no;     #hint useStops: use stop orders
+input useStops2 = no; #hint useStops2: use stop orders
+input useStops3 = no; #hint useStops3: use stop orders
+
+input useAlerts = no;    #hint useAlerts: use alerts on signals
+input useAlerts2 = no; #hint useAlerts2: use alerts on signals
+input useAlerts3 = no; #hint useAlerts3: use alerts on signals
+
+# --- TRIPLE EXHAUSTION ---
+input DI_Length = 14;
+                                                                                                                                                       input averageType_3x = AverageType.SIMPLE;
+input length_3x = 1000;
+def over_bought_3x = 80;
+def over_sold_3x = 20;
+def KPeriod_3x = 10;
+def DPeriod_3x = 10;
+def priceH1 = high(period = agperiod2);
+def priceL1 = low(period = agperiod2);
+def priceC1 = close(period = agperiod2);
+def priceO1 = close(period = agperiod2);
+def priceH_3x = high;
+def priceL_3x = low;
+def priceC_3x = close;
+# --- TRIPLE EXHAUSTION INDICATORS - StochasticSlow / MACD / MACD StDev / DMI+/-
+def bn = barnumber();
+def SlowK_3x = reference StochasticFull(over_bought_3x, over_sold_3x, KPeriod_3x, DPeriod_3x, priceH_3x, priceL_3x, priceC_3x, 3, averageType_3x).FullK;
+#def SlowK1 = reference StochasticFull(over_bought_3x, over_sold_3x, KPeriod_3x, DPeriod_3x, priceH1, priceL1, priceC1, 3, averageType).FullK;
+
+def MACD_3x = reference MACD()."Value";
+#def MACD1 = (ExpAverage(priceC1[1], 12)) - (ExpAverage(priceC1[1], 26));
+
+def priceMean_3x = Average(MACD_3x, length_3x);
+#def priceMean1 = SimpleMovingAvg(MACD1, length);
+
+def MACD_stdev_3x =  (MACD_3x - priceMean_3x) / StDev(MACD_3x, length_3x);
+#def MACD_stdev1 = (MACD1 - priceMean1) / StDev(MACD1, length);
+
+def dPlus_3x = reference DMI()."DI+";
+def dMinus_3x = reference DMI()."DI-";
+
+#def hiDiff1 = priceH1 - priceH1[1];
+#def loDiff1 = priceL1[1] - priceL1;
+#def plusDM1 = if hiDiff1 > loDiff1 and hiDiff1 > 0 then hiDiff1 else 0;
+#def minusDM1 =  if loDiff1 > hiDiff1 and loDiff1 > 0 then loDiff1 else 0;
+
+#def ATR1 = MovingAverage(averageType, TrueRange(priceH1, priceC1, priceL1), DI_Length);
+
+#def dPlus1 = 100 * MovingAverage(AverageType.WILDERS, plusDM1, DI_Length) / ATR1;
+#def dMinus1 = 100 * MovingAverage(AverageType.WILDERS, minusDM1, DI_Length) / ATR1;
+
+def sellerRegular = SlowK_3x < 20 and MACD_stdev_3x < -1 and dPlus_3x < 15;
+#def sellerRegular1 = SlowK1 < 20 and MACD_stdev1 < -1 and dPlus1 < 15;
+
+def sellerExtreme = SlowK_3x < 20 and MACD_stdev_3x < -2 and dPlus_3x < 15;
+#def sellerExtreme1 = SlowK1 < 20 and MACD_stdev1 < -2 and dPlus1 < 15;
+
+def buyerRegular = SlowK_3x > 80 and MACD_stdev_3x > 1 and dMinus_3x < 15;
+#def buyerRegular1 = SlowK1 > 80 and MACD_stdev1 > 1 and dMinus1 < 15;
+
+def buyerExtreme = SlowK_3x > 80 and MACD_stdev_3x > 2 and dMinus_3x < 15;
+#def buyerExtreme1 = SlowK1 > 80 and MACD_stdev1 > 2 and dMinus1 < 15;
+
+# --- Arrows/Triggers
+
+def RegularBuy = if sellerRegular[1] and !sellerRegular then 1 else 0;
+def RegularBuy_bn = if RegularBuy then bn else RegularBuy_bn[1];
+
+def ExtremeBuy = if sellerExtreme[1] and !sellerExtreme then 1 else 0;
+def ExtremeBuy_bn = if ExtremeBuy then bn else ExtremeBuy_bn[1];
+
+def RegularSell = if buyerRegular[1] and !buyerRegular then 1 else 0;
+def RegularSell_bn = if RegularSell then bn else RegularSell_bn[1];
+
+def ExtremeSell = if buyerExtreme[1] and !buyerExtreme then 1 else 0;
+def ExtremeSell_bn = if ExtremeSell then bn else ExtremeSell_bn[1];
+
+
+#plot RegularBuy1 = if Show_3x and (sellerRegular1[1] and !sellerRegular1) then 1 else 0;
+#plot ExtremeBuy1 = if Show_3x and (sellerExtreme1[1] and !sellerExtreme1) then 1 else 0;
+#plot RegularSell1 = if Show_3x and (buyerRegular1[1] and !buyerRegular1) then 1 else 0;
+#plot ExtremeSell1 = if Show_3x and (buyerExtreme1[1] and !buyerExtreme1) then 1 else 0;
+
+#AddVerticalLine(RegularBuy1 or ExtremeBuy1,  "", Color.dark_Green, curve.short_DASH);
+#AddVerticalLine(RegularSell1 or ExtremeSell1, "", Color.Dark_Red, curve.short_DASH);
+
+def O = open;
+def H = high;
+def C = close;
+def L = low;
+def V = volume;
+def buying = V*(C-L)/(H-L);
+def selling = V*(H-C)/(H-L);
+
+input length_AVG = 5;
+input length_Sell_AVG = 5;
+input length_Buy_AVG = 5;
+
+def VolAvg = Average(volume, length_AVG);
+def sellAvg = Average(selling, length_Sell_AVG);
+def buyAvg = Average(buying, length_buy_AVG);
+
+# Sell / buy average increasing decreasing
+def sellavgup = sellavg > sellavg[1];
+#AddVerticalLine(sellavgup, "", Color.magenta,Curve.firm);
+
+def sellavgdn = sellavg < sellavg[1];
+#AddVerticalLine(sellavgdn, "", Color.cyan,Curve.firm);
+
+def buyavgdn = buyavg < buyavg[1];
+#AddVerticalLine(buyavgdn, "", Color.Light_red,Curve.long_DASH);
+
+def buyavgup = buyavg > buyavg[1];
+#AddVerticalLine(buyavgup, "", Color.light_green,Curve.long_DASH);
+
+# Sell / buy increasing decreasing
+def sellabvavg = selling > selling[1];
+#AddVerticalLine(sellabvavg, "", Color.Dark_red,Curve.SHORT_DASH);
+
+def buyabvavg = buying < buying[1];
+#AddVerticalLine(buyabvavg, "", Color.Dark_green,Curve.SHORT_DASH);
+
+# Sell / Buy average greater than or less than buy sell
+def sell_buy = sellavg > buyavg;
+#AddVerticalLine(sell_buy, "", Color.red,Curve.medium_DASH);
+
+def buy_sell = sellavg < buyavg;
+#AddVerticalLine(buy_sell, "", Color.green,Curve.medium_DASH);
+
+#plot sellabvavg_Down = sellabvavg and sellabvavg[1];
+#sellabvavg_Down.AssignValueColor(Color.GRAY);
+#sellabvavg_Down.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+#sellabvavg_Down.SetLineWeight(4);
+
+def abvavg3 = selling > volavg;
+
+def lines = (sellabvavg and sellabvavg[1] and sellabvavg[2] and sellabvavg[3]) and (buyabvavg and buyabvavg[1] and buyabvavg[2] and buyabvavg[3]);
+#AddVerticalLine(lines, "", Color.orange,Curve.SHORT_DASH);
+#abvavg_2.AssignValueColor(Color.GRAY);
+#abvavg_2.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+#abvavg_2.SetLineWeight(4);
+
+input type = { default SMP, EXP } ;
+input length_HV = 3 ;
+input HotPct = 100.0 ;
+input showmarket = yes;
+
+def MA =
+if type == type.SMP then
+SimpleMovingAvg(volume, length_HV)
+else
+MovAvgExponential(volume, length_HV);
+
+def price = (high + low) / 2;
+
+def coeff = length * price * price - 2 * price * sum(price, length)[1] + sum(price * price, length)[1];
+
+#plot Ehlers = sum(coeff * price, length) / sum(coeff, length);
+#Ehlers.SetDefaultColor(GetColor(1));
+#Ehlers.Sethiding(Show_Elhers);
+
+plot HV =
+if 100 * ((volume / ma) - 1) >= hotPct then
+close
+else
+Double.NaN;
+
+hv.SetDefaultColor( Color.magenta);
+hv.SetLineWeight(5) ;
+hv.SetPaintingStrategy( PaintingStrategy.TRIANGLES);
+
+#AssignPriceColor(if coloredCandlesOn and ((Direction > 0)) then Color.GREEN else if coloredCandlesOn and ((Direction < 0)) then Color.RED else Color.GRAY);
+#AddOrder(OrderType.BUY_AUTO, condition = Long_Entry, price = open[-1], 1, tickcolor = GetColor(1), arrowcolor = Color.LIME, name = "LE");
+#AddOrder(OrderType.SELL_AUTO, condition = Long_Exit, price = open[-1], 1, tickcolor = GetColor(2), arrowcolor = Color.LIME, name = "SE");
+
+
+
+
+#input coloredCandlesOn = no;
+#input show_elhers = no;
+def priceE2 = (high2 + low2) / 2;
+
+def coeffE2 = lengthE2 * priceE2 * priceE2 - 2 * priceE2 * sum(priceE2, lengthE2)[1] + sum(priceE2 * priceE2, lengthE2)[1];
+
+#plot EhlersE2 = sum(coeffE2 * priceE2, lengthE2) / sum(coeffE2, lengthE2);
+#EhlersE2.SetDefaultColor(GetColor(2));
+#Ehlers.Sethiding(Show_Elhers);
+
+def high3 = high(period = agperiod3);
+def low3 = low(period = agperiod3);
+def close3 = close(period = agperiod3);
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+def price_V9 = close;
+def price_V92 = close2;
+def price_V93 = close3;
+
+#input coloredCandlesOn = no;
+#input coloredCandlesOn2 = no;
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+Assert(ATRFactor > 0, "'atr factor' must be positive: " + ATRFactor);
+
+def HiLo = Min(high - low, 1.5 * Average(high - low, ATRPeriod));
+def HRef = if low <= high[1]
+    then high - close[1]
+    else (high - close[1]) - 0.5 * (low - high[1]);
+def LRef = if high >= low[1]
+    then close[1] - low
+    else (close[1] - low) - 0.5 * (low[1] - high);
+
+def trueRange;
+switch (trailType) {
+case modified:
+    trueRange = Max(HiLo, Max(HRef, LRef));
+case unmodified:
+    trueRange = TrueRange(high, close, low);
+}
+def loss = ATRFactor * MovingAverage(averageType, trueRange, ATRPeriod);
+
+def state = {default init, long, short};
+def trail;
+switch (state[1]) {
+case init:
+    if (!IsNaN(loss)) {
+        switch (firstTrade) {
+        case long:
+            state = state.long;
+            trail =  close - loss;
+        case short:
+            state = state.short;
+            trail = close + loss;
+    }
+    } else {
+        state = state.init;
+        trail = Double.NaN;
+    }
+case long:
+    if (close > trail[1]) {
+        state = state.long;
+        trail = Max(trail[1], close - loss);
+    } else {
+        state = state.short;
+        trail = close + loss;
+    }
+case short:
+    if (close < trail[1]) {
+        state = state.short;
+        trail = Min(trail[1], close + loss);
+    } else {
+        state = state.long;
+        trail =  close - loss;
+    }
+}
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+Assert(ATRFactor2 > 0, "'atr factor' must be positive: " + ATRFactor2);
+
+def HiLo2 = Min(high2 - low2, 1.5 * Average(high2 - low2, ATRPeriod2));
+def HRef2 = if low2 <= high2[1]
+    then high2 - close2[1]
+    else (high2 - close2[1]) - 0.5 * (low2 - high2[1]);
+def LRef2 = if high2 >= low2[1]
+    then close2[1] - low2
+    else (close2[1] - low2) - 0.5 * (low2[1] - high2);
+
+def trueRange2;
+switch (trailType2) {
+    case modified2:
+        trueRange2 = Max(HiLo2, Max(HRef2, LRef2));
+    case unmodified2:
+        trueRange2 = TrueRange(high2, close2, low2);
+}
+def loss2 = ATRFactor2 * MovingAverage(averageType2, trueRange2, ATRPeriod2);
+
+def state2 = {default init2, long2, short2};
+def trail2;
+switch (state2[1]) {
+    case init2:
+        if (!IsNaN(loss2)) {
+            switch (firstTrade2) {
+                case long2:
+                    state2 = state2.long2;
+                    trail2 = close2 - loss2;
+                case short2:
+                    state2 = state2.short2;
+                    trail2 = close2 + loss2;
+            }
+        } else {
+            state2 = state2.init2;
+            trail2 = Double.NaN;
+        }
+    case long2:
+        if (close2 > trail2[1]) {
+            state2 = state2.long2;
+            trail2 = Max(trail2[1], close2 - loss2);
+        } else {
+            state2 = state2.short2;
+            trail2 = close2 + loss2;
+        }
+    case short2:
+        if (close2 < trail2[1]) {
+            state2 = state2.short2;
+            trail2 = Min(trail2[1], close2 + loss2);
+        } else {
+            state2 = state2.long2;
+            trail2 = close2 - loss2;
+        }
+}
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+Assert(ATRFactor3 > 0, "'atr factor' must be positive: " + ATRFactor3);
+
+def HiLo3 = Min(high3 - low3, 1.5 * Average(high3 - low3, ATRPeriod3));
+def HRef3 = if low3 <= high3[1]
+    then high3 - close3[1]
+    else (high3 - close3[1]) - 0.5 * (low3 - high3[1]);
+def LRef3 = if high3 >= low3[1]
+    then close3[1] - low3
+    else (close3[1] - low3) - 0.5 * (low3[1] - high3);
+
+def trueRange3;
+switch (trailType3) {
+    case modified3:
+        trueRange3 = Max(HiLo3, Max(HRef3, LRef3));
+    case unmodified3:
+        trueRange3 = TrueRange(high3, close3, low3);
+}
+def loss3 = ATRFactor3 * MovingAverage(averageType3, trueRange3, ATRPeriod3);
+
+def state3 = {default init3, long3, short3};
+def trail3;
+switch (state3[1]) {
+    case init3:
+        if (!IsNaN(loss3)) {
+            switch (firstTrade3) {
+                case long3:
+                    state3 = state3.long3;
+                    trail3 = close3 - loss3;
+                case short3:
+                    state3 = state3.short3;
+                    trail3 = close3 + loss3;
+            }
+        } else {
+            state3 = state3.init3;
+            trail3 = Double.NaN;
+        }
+    case long3:
+        if (close3 > trail3[1]) {
+            state3 = state3.long3;
+            trail3 = Max(trail3[1], close3 - loss3);
+        } else {
+            state3 = state3.short3;
+            trail3 = close3 + loss3;
+        }
+    case short3:
+        if (close3 < trail3[1]) {
+            state3 = state3.short3;
+            trail3 = Min(trail3[1], close3 + loss3);
+        } else {
+            state3 = state3.long3;
+            trail3 = close3 - loss3;
+        }
+}
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+def TrailingStop = trail;
+def LongEnter = (price_v9 crosses above TrailingStop);
+def LongExit = (price_v9 crosses below TrailingStop);
+
+def TrailingStop2 = trail2;
+def LongEnter2 = (price_v92 crosses above TrailingStop2);
+def LongExit2 = (price_v92 crosses below TrailingStop2) ;
+
+def TrailingStop3 = trail3;
+def LongEnter3 = (price_v93 crosses above TrailingStop3);
+def LongExit3 = (price_v93 crosses below TrailingStop3);
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+#AssignPriceColor(if coloredCandlesOn and ((price > TrailingStop)) then Color.GREEN else if coloredCandlesOn and ((price < TrailingStop)) then Color.RED else Color.GRAY);
+Alert(price_v9 crosses above TrailingStop, "long", Alert.BAR, Sound.Ding);
+Alert(price_v92 crosses above TrailingStop2, "long", Alert.BAR, Sound.Ding);
+Alert(price_v93 crosses above TrailingStop3, "long", Alert.BAR, Sound.Ding);
+
+Alert(price_v9 crosses below TrailingStop, "short", Alert.BAR, Sound.Ding);
+Alert(price_v92 crosses below TrailingStop2, "short", Alert.BAR, Sound.Ding);
+Alert(price_v93 crosses below TrailingStop3, "short", Alert.BAR, Sound.Ding);
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+def upsignal = (price_V9 crosses above TrailingStop);
+def upsignal2 = (price_V92 crosses above TrailingStop2);
+def upsignal3 = (price_V93 crosses above TrailingStop3);
+
+def downsignal = (price_v9 crosses below TrailingStop);
+def downsignal2 = (price_v92 crosses below TrailingStop2);
+def downsignal3 = (price_v93 crosses below TrailingStop3);
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+def Begin = SecondsFromTime(OpenTime);
+def End = SecondsTillTime(CloseTime);
+
+def Begin2 = SecondsFromTime(OpenTime2);
+def End2 = SecondsTillTime(CloseTime2);
+
+def Begin3 = SecondsFromTime(OpenTime3);
+def End3 = SecondsTillTime(CloseTime3);
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+# Only use market hours when using intraday timeframe
+def isIntraDay = if GetAggregationPeriod() > 14400000 or GetAggregationPeriod() == 0 then 0 else 1;
+def MarketOpen = if !tradeDaytimeOnly or !isIntraDay then 1 else if tradeDaytimeOnly and isIntraDay and Begin > 0 and End > 0 then 1 else 0;
+
+def isIntraDay2 = if GetAggregationPeriod() > 14400000 or GetAggregationPeriod() == 0 then 0 else 1;
+def MarketOpen2 = if !tradeDaytimeOnly2 or !isIntraDay2 then 1 else if tradeDaytimeOnly2 and isIntraDay2 and Begin2 > 0 and End2 > 0 then 1 else 0;
+
+def isIntraDay3 = if GetAggregationPeriod() > 14400000 or GetAggregationPeriod() == 0 then 0 else 1;
+def MarketOpen3 = if !tradeDaytimeOnly3 or !isIntraDay3 then 1 else if tradeDaytimeOnly3 and isIntraDay3 and Begin3 > 0 and End3 > 0 then 1 else 0;
+
+######################################################
+##  Create Signals -
+##  FILL IN THIS SECTION
+##      replace 0>0 with your conditions for signals
+######################################################
+
+def PLBuySignal_1 = if  MarketOpen and (upsignal) then 1 else 0 ; # insert condition to create long position in place of the 0>0
+def PLBuySignal_1_bn = if PLBuySignal_1 then bn else PLBuySignal_1_bn[1];
+
+def PLBuySignal2_2 = if MarketOpen2 and (Upsignal2) then 1 else 0; # insert condition to create long position in place of the 0>0
+def PLBuySignal2_2_bn = if PLBuySignal2_2 then bn else PLBuySignal2_2_bn[1];
+
+def PLBuySignal3_3 = if MarketOpen3 and (Upsignal3) then 1 else 0 ; # insert condition to create long position in place of the 0>0
+def PLBuySignal3_3_bn = if PLBuySignal3_3 then bn else PLBuySignal3_3_bn[1];
+
+###################################################################################
+
+def PLSellSignal_1 =  if MarketOpen and (downsignal) then 1 else 0; # insert condition to create short position in place of the 0>0
+def PLSellSignal_1_bn = if PLSellSignal_1 then bn else PLSellSignal_1_bn[1];
+
+def PLSellSignal2_2 = if MarketOpen2 and (downsignal2) then 1 else 0; # insert condition to create short position in place of the 0>0
+def PLSellSignal2_2_bn = if PLSellSignal2_2 then bn else PLSellSignal2_2_bn[1];
+
+def PLSellSignal3_3 = if MarketOpen3 and (downsignal3) then 1 else 0; # insert condition to create short position in place of the 0>0
+def PLSellSignal3_3_bn = if PLSellSignal3_3 then bn else PLSellSignal3_3_bn[1];
+
+#########################################################################################################################################################
+
+def Prev_Bar_Buy_1 = if (PLBuySignal_1 or PLBuySignal_1[1] or PLBuySignal_1[2] or PLBuySignal_1[3]) then 1 else 0;
+def Prev_Bar_Buy_2 = if (PLBuySignal2_2 or PLBuySignal2_2[1] or PLBuySignal2_2[2] or PLBuySignal2_2[3]) then 1 else 0;
+def Prev_Bar_Buy_3 = if (PLBuySignal3_3 or PLBuySignal3_3[1] or PLBuySignal3_3[2] or PLBuySignal3_3[3]) then 1 else 0;
+
+def Prev_Bar_Sell_1 = if (PLSellSignal_1 or PLSellSignal_1[1] or PLSellSignal_1[2] or PLSellSignal_1[3]) then 1 else 0;
+def Prev_Bar_Sell_2 = if (PLSellSignal2_2 or PLSellSignal2_2[1] or PLSellSignal2_2[2] or PLSellSignal2_2[3]) then 1 else 0;
+def Prev_Bar_Sell_3 = if (PLSellSignal3_3 or PLSellSignal3_3[1] or PLSellSignal3_3[2] or PLSellSignal3_3[3]) then 1 else 0;
+
+def Prev_Buy_2 = if upsignal and (PLSellSignal2_2_bn < PLBuySignal2_2_bn) then 1 else 0;
+def Prev_Buy_3 = if upsignal and (PLSellSignal3_3_bn < PLBuySignal3_3_bn) then 1 else 0;
+def Prev_Buy_4 = if upsignal and (PLSellSignal2_2_bn < PLBuySignal2_2_bn) then 1 else 0;
+def Prev_Buy_5 = if upsignal and (PLSellSignal3_3_bn < PLBuySignal3_3_bn) then 1 else 0;
+
+def Prev_Sell_2 = if downsignal and (PLSellSignal2_2_bn > PLBuySignal2_2_bn) then 1 else 0;
+def Prev_Sell_3 = if downsignal and (PLSellSignal3_3_bn > PLBuySignal3_3_bn) then 1 else 0;
+def Prev_Sell_4 = if downsignal2 and (PLSellSignal2_2_bn > PLBuySignal2_2_bn) then 1 else 0;
+def Prev_Sell_5 = if downsignal and (PLSellSignal3_3_bn > PLBuySignal3_3_bn) then 1 else 0;
+
+#########################################################################################################################################################
+
+####################################################
+#diff signal same agg bn
+####################################################
+
+def Sell_Minus_Buy1_1 = (PLSellSignal_1_bn - PLBuySignal_1_bn);
+def Buy_Minus_Sell1_1 = (PLBuySignal_1_bn - PLSellSignal_1_bn);
+
+def Sell2_Minus_Buy2_2 = (PLSellSignal2_2_bn - PLBuySignal2_2_bn);
+def Buy2_Minus_Sell2_2 = (PLBuySignal2_2_bn - PLSellSignal2_2_bn);
+
+def Sell3_Minus_Buy3_3 = (PLSellSignal3_3_bn - PLBuySignal3_3_bn);
+def Buy3_Minus_Sell3_3 = (PLBuySignal3_3_bn - PLSellSignal3_3_bn);
+
+####################################################
+#opposite signal Same ag within x bars
+####################################################
+
+def Sell_dist_Buy_1 = Sell_Minus_Buy1_1 >= bars_back;
+def Buy_dist_Sell_1 = Buy_Minus_Sell1_1 >= bars_back;
+
+def Sell_dist_Buy_2 = Sell2_Minus_Buy2_2 >= bars_back;
+def Buy_dist_Sell_2 = Buy2_Minus_Sell2_2 >= bars_back;
+
+def Sell_dist_Buy_3 = Sell3_Minus_Buy3_3 >= bars_back;
+def Buy_dist_Sell_3 = Buy3_Minus_Sell3_3 >= bars_back;
+
+####################################################
+#opposite signal higher ag bn
+####################################################
+
+def Sell_Minus_Buy2_1 = (PLSellSignal_1_bn - PLBuySignal2_2_bn);
+def Buy_Minus_Sell2_1 = (PLBuySignal_1_bn - PLSellSignal2_2_bn);
+
+def Sell_Minus_Buy3_1 = (PLSellSignal_1_bn - PLBuySignal3_3_bn);
+def Buy_Minus_Sell3_1 = (PLBuySignal_1_bn - PLSellSignal3_3_bn);
+
+def Sell2_Minus_Buy3_2 = (PLSellSignal2_2_bn - PLBuySignal3_3_bn);
+def Buy2_Minus_Sell3_2 = (PLBuySignal2_2_bn - PLSellSignal3_3_bn);
+
+####################################################
+#opposite signal higher ag within x bars
+####################################################
+
+def Sell_dist_Buy2_1 = Sell_Minus_Buy2_1 >= bars_back;
+def Buy_dist_Sell2_1 = Buy_Minus_Sell2_1 >= bars_back;
+
+def Sell_dist_Buy3_3 = Sell_Minus_Buy3_1 >= bars_back;
+def Buy_dist_Sell3_3 = Buy_Minus_Sell3_1 >= bars_back;
+
+def Sell2_dist_Buy3_2 = Sell2_Minus_Buy3_2 >= bars_back;
+def Buy2_dist_Sell3_2 = Buy2_Minus_Sell3_2 >= bars_back;
+
+####################################################
+#same signal higher agg
+####################################################
+
+def Sell_Minus_Sell2_1 = (PLSellSignal_1_bn - PLSellSignal2_2_bn);
+def Buy_Minus_Buy2_1 = (PLBuySignal_1_bn - PLBuySignal2_2_bn);
+
+def Sell_Minus_Sell3_1 = (PLSellSignal_1_bn - PLSellSignal3_3_bn);
+def Buy_Minus_Buy3_1 = (PLBuySignal_1_bn - PLBuySignal3_3_bn);
+
+def Sell2_Minus_Sell3_2 = (PLSellSignal2_2_bn - PLSellSignal3_3_bn);
+def Buy2_Minus_Buy3_2 = (PLBuySignal2_2_bn - PLBuySignal3_3_bn);
+
+####################################################
+#Same signal higher ag within x bars
+####################################################
+
+def Sell_dist_Sell2_1 = Sell_Minus_Sell2_1 >= bars_back;
+def Buy_dist_Buy2_1 = Buy_Minus_Buy2_1 >= bars_back;
+
+def Sell_dist_Sell3_1 = Sell_Minus_Sell3_1 >= bars_back;
+def Buy_dist_Buy3_1 = Buy_Minus_Buy3_1 >= bars_back;
+
+def Sell2_dist_Sell3_2 = Sell2_Minus_Sell3_2 >= bars_back;
+def Buy2_dist_Buy3_2 =  Buy2_Minus_Buy3_2 >= bars_back;
+
+####################################################
+#Last signal higher ag
+####################################################
+
+def Last_Sell_2 = if downsignal and Sell_Minus_Sell2_1 < Sell_Minus_Buy2_1 then 1 else 0;
+def Last_Buy_2 = if upsignal and  Sell_Minus_Sell2_1 > Sell_Minus_Buy2_1 then 1 else 0;
+
+def Last_Sell_3 = if downsignal and  Sell_Minus_Sell3_1 < Sell_Minus_Buy3_1 then 1 else 0;
+def Last_Buy_3 = if upsignal and  Sell_Minus_Sell3_1 > Sell_Minus_Buy3_1 then 1 else 0;
+
+def Last2_Sell_3 = if downsignal and  Sell2_Minus_Sell3_2 < Sell2_Minus_Buy3_2 then 1 else 0;
+def Last2_Buy_3 = if upsignal and  Sell2_Minus_Sell3_2 > Sell2_Minus_Buy3_2 then 1 else 0;
+
+####################################################
+#higher ag prev sell bn > than prev buy bn
+####################################################
+
+def SellSig_First_2 = if downsignal and (PLSellSignal2_2_bn > PLBuySignal2_2_bn) then 1 else 0;
+def BuySig_First_2 = if upsignal and (PLBuySignal2_2_bn > PLSellSignal2_2_bn) then 1 else 0;
+
+def SellSig_First_3 = if downsignal2 and (PLSellSignal3_3_bn > PLBuySignal3_3_bn) then 1 else 0;
+def BuySig_First_3 = if upsignal2 and (PLBuySignal3_3_bn > PLSellSignal3_3_bn) then 1 else 0;
+
+#########################################################################################################################################################
+
+
+
+#def PLBuySignal = if  MarketOpen and (upsignal) and (Last_Buy_2 or Last_Buy_3 or Last2_Buy_3) then 1 else 0 ; # insert condition to create long position in place of the 0>0
+#def PLSellSignal =  if MarketOpen and (downsignal) and (Last_Sell_2 or Last_Sell_3 or Last2_Sell_3) then 1 else 0; # insert condition to create short position in place of the 0>0
+
+def PLBuySignal_51 = if  MarketOpen and (upsignal) and (BuySig_First_2) then 1 else 0 ; # insert condition to create long position in place of the 0>0
+def PLSellSignal_51 =  if MarketOpen and (downsignal) and (SellSig_First_2) then 1 else 0; # insert condition to create short position in place of the 0>0
+
+def PLSellSignal2 = if MarketOpen2 and (downsignal2) and  (SellSig_First_3)  then 1 else 0; # insert condition to create short position in place of the 0>0
+def PLBuySignal2 = if MarketOpen2 and (UPsignal2) and (BuySig_First_3) then 1 else 0; # insert condition to create short position in place of the 0>0
+
+def PLSellSignal3 = if MarketOpen2 and (downsignal3)then 1 else 0; # insert condition to create short position in place of the 0>0
+def PLBuySignal3 = if MarketOpen2 and (UPsignal3)then 1 else 0; # insert condition to create short position in place of the 0>0
+
+def PLBuySignal = if (PLBuySignal_51 or PLBuySignal2 or PLBuySignal3) then 1 else 0 ; # insert condition to create long position in place of the 0>0
+def PLSellSignal =  if (PLSellSignal_51 or PLSellSignal2 or PLSellSignal3) then 1 else 0; # insert condition to create short position in place of the 0>0
+
+
+
+def PLBuySignal_bn = if PLBuySignal then bn else PLBuySignal_bn[1];
+def PLSellSignal_bn = if PLSellSignal then bn else PLSellSignal_bn[1];
+
+#########################################################################################################################################################
+
+def PLBuyStop  = if !useStops then 0 else if  (0 > 0) then 1 else 0  ; # insert condition to stop in place of the 0<0
+def PLBuyStop2 = if !useStops2 then 0 else if (0 > 0) then 1 else 0 ; # insert condition to stop in place of the 0<0
+def PLBuyStop3 = if !useStops3 then 0 else if (0 > 0) then 1 else 0 ; # insert condition to stop in place of the 0<0
+
+def PLSellStop = if !useStops then 0 else if (0 > 0) then 1 else 0  ; # insert condition to stop in place of the 0>0
+def PLSellStop2 = if !useStops2 then 0 else if (0 > 0) then 1 else 0  ; # insert condition to stop in place of the 0>0
+def PLSellStop3 = if !useStops3 then 0 else if (0 > 0) then 1 else 0  ; # insert condition to stop in place of the 0>0
+
+def PLMktStop = if MarketOpen[-1] == 0 then 1 else 0; # If tradeDaytimeOnly is set, then stop at end of day
+def PLMktStop2 = if MarketOpen2[-1] == 0 then 1 else 0; # If tradeDaytimeOnly is set, then stop at end of day
+def PLMktStop3 = if MarketOpen3[-1] == 0 then 1 else 0; # If tradeDaytimeOnly is set, then stop at end of day
+
+#########################################################################################################################################################
+
+#########################################################################################################################################################
+
+#######################################
+##  Maintain the position of trades
+#######################################
+# change CurrentPosition to CurrentPosition2, PLBuySignal tp PLBuySignal2, LongTrades to LongTrades2, ShortTrades to ShortTrades2, PLBuyStop to PLBuyStop2, useStops to useStops2, PLMktStop to PLMktStop2
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+def CurrentPosition;  # holds whether flat = 0 long = 1 short = -1
+
+if (BarNumber() == 1) or IsNaN(CurrentPosition[1]) {
+    CurrentPosition = 0;
+} else {
+    if CurrentPosition[1] == 0 {            # FLAT
+        if (PLBuySignal and LongTrades) {
+            CurrentPosition = 1;
+        } else if (PLSellSignal and ShortTrades) {
+            CurrentPosition = -1;
+        } else {
+            CurrentPosition = CurrentPosition[1];
+        }
+    } else if CurrentPosition[1] == 1 {      # LONG
+        if (PLSellSignal and ShortTrades) {
+            CurrentPosition = -1;
+        } else if ((PLBuyStop and useStops) or PLMktStop or (PLSellSignal and ShortTrades == 0)) {
+            CurrentPosition = 0;
+        } else {
+            CurrentPosition = CurrentPosition[1];
+        }
+    } else if CurrentPosition[1] == -1 {     # SHORT
+        if (PLBuySignal and LongTrades) {
+            CurrentPosition = 1;
+        } else if ((PLSellStop and useStops) or PLMktStop or (PLBuySignal and LongTrades == 0)) {
+            CurrentPosition = 0;
+        } else {
+            CurrentPosition = CurrentPosition[1];
+        }
+    } else {
+        CurrentPosition = CurrentPosition[1];
+    }
+}
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+def CurrentPosition2;  # holds whether flat = 0 long = 1 short = -1
+
+if (BarNumber() == 1) or IsNaN(CurrentPosition2[1]) {
+    CurrentPosition2 = 0;
+} else {
+    if CurrentPosition2[1] == 0 {            # FLAT
+        if (PLBuySignal2 and LongTrades2) {
+            CurrentPosition2 = 1;
+        } else if (PLSellSignal2 and ShortTrades2) {
+            CurrentPosition2 = -1;
+        } else {
+            CurrentPosition2 = CurrentPosition2[1];
+        }
+    } else if CurrentPosition2[1] == 1 {      # LONG
+        if (PLSellSignal2 and ShortTrades2) {
+            CurrentPosition2 = -1;
+        } else if ((PLBuyStop2 and useStops2) or PLMktStop2 or (PLSellSignal2 and ShortTrades2 == 0)) {
+            CurrentPosition2 = 0;
+        } else {
+            CurrentPosition2 = CurrentPosition2[1];
+        }
+    } else if CurrentPosition2[1] == -1 {     # SHORT
+        if (PLBuySignal2 and LongTrades2) {
+            CurrentPosition2 = 1;
+        } else if ((PLSellStop2 and useStops2) or PLMktStop2 or (PLBuySignal2 and LongTrades2 == 0)) {
+            CurrentPosition2 = 0;
+        } else {
+            CurrentPosition2 = CurrentPosition2[1];
+        }
+    } else {
+        CurrentPosition2 = CurrentPosition2[1];
+    }
+}
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+def CurrentPosition3;  # holds whether flat = 0 long = 1 short = -1
+
+if (BarNumber() == 1) or IsNaN(CurrentPosition3[1]) {
+    CurrentPosition3 = 0;
+} else {
+    if CurrentPosition3[1] == 0 {            # FLAT
+        if (PLBuySignal3 and LongTrades3) {
+            CurrentPosition3 = 1;
+        } else if (PLSellSignal3 and ShortTrades3) {
+            CurrentPosition3 = -1;
+        } else {
+            CurrentPosition3 = CurrentPosition3[1];
+        }
+    } else if CurrentPosition3[1] == 1 {      # LONG
+        if (PLSellSignal3 and ShortTrades3) {
+            CurrentPosition3 = -1;
+        } else if ((PLBuyStop3 and useStops3) or PLMktStop3 or (PLSellSignal3 and ShortTrades3 == 0)) {
+            CurrentPosition3 = 0;
+        } else {
+            CurrentPosition3 = CurrentPosition3[1];
+        }
+    } else if CurrentPosition3[1] == -1 {     # SHORT
+        if (PLBuySignal3 and LongTrades3) {
+            CurrentPosition3 = 1;
+        } else if ((PLSellStop3 and useStops3) or PLMktStop3 or (PLBuySignal3 and LongTrades3 == 0)) {
+            CurrentPosition3 = 0;
+        } else {
+            CurrentPosition3 = CurrentPosition3[1];
+        }
+    } else {
+        CurrentPosition3 = CurrentPosition3[1];
+    }
+}
+
+#########################################################################################################################################################
+
+
+#########################################################################################################################################################
+
+def isLong  = if CurrentPosition == 1 then 1 else 0;
+def isShort = if CurrentPosition == -1 then 1 else 0;
+def isFlat  = if CurrentPosition == 0 then 1 else 0;
+
+def isLong2  = if CurrentPosition2 == 1 then 1 else 0;
+def isShort2 = if CurrentPosition2 == -1 then 1 else 0;
+def isFlat2  = if CurrentPosition2 == 0 then 1 else 0;
+
+def isLong3  = if CurrentPosition3 == 1 then 1 else 0;
+def isShort3 = if CurrentPosition3 == -1 then 1 else 0;
+def isFlat3  = if CurrentPosition3 == 0 then 1 else 0;
+
+
+
+
+def BuySig = if (((isShort[1] and LongTrades) or (isFlat[1] and LongTrades)) and PLBuySignal and showSignals)  then 1 else 0;
+#BuySig.AssignValueColor(Color.cyan);
+#BuySig.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+#BuySig.SetLineWeight(1);
+def buysigbn = if BuySig then bn else buysigbn[1];
+
+def BuySig2 = if (((isShort2[1] and LongTrades2) or (isFlat2[1] and LongTrades2)) and PLBuySignal2 and showSignals2) then 1 else 0;
+#BuySig2.AssignValueColor(Color.white);
+#BuySig2.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+#BuySig2.SetLineWeight(1);
+def buysig2bn = if BuySig2 then bn else buysig2bn[1];
+
+###################################################################################################################################
+def BuySig3 = if (((isShort3[1] and LongTrades3) or (isFlat3[1] and LongTrades3)) and PLBuySignal3 and showSignals3) then 1 else 0;
+#BuySig3.AssignValueColor(Color.ORANGE);
+#BuySig3.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+#BuySig3.SetLineWeight(1);
+def buysig3bn = if BuySig3 then bn else buysig3bn[1];
+
+def buy = if (BuySig or BuySig2 or BuySig3) then 1 else 0;
+#Buy.AssignValueColor(Color.Magenta);
+#Buy.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+#Buy.SetLineWeight(1);
+###################################################################################################################################
+
+# If not already long and get a PLBuySignal
+#Plot BuySig = if (!isLong[1] and PLBuySignal and showSignals and LongTrades) then 1 else 0;
+#plot BuySig = if (((isShort[1] and LongTrades) or (isFlat[1] and LongTrades)) and PLBuySignal and showSignals) and hide_buy then 1 else 0;
+#plot BuySig = if (((isShort[1] and LongTrades) or (isFlat[1] and LongTrades)) and PLBuySignal and showSignals) and hide_buy_2 then 1 else 0;
+#addverticalLine(buysig,"",Color.green);
+
+Alert(BuySig and useAlerts, "Buy Signal", Alert.BAR, Sound.Ding);
+Alert(BuySig and useAlerts, "Buy Signal", Alert.BAR, Sound.Ding);
+
+#Plot BuySig2 = if (!isLong[1] and PLBuySignal2 and showSignals2 and LongTrades2) then 1 else 0;
+
+Alert(BuySig2 and useAlerts2, "Buy Signal", Alert.BAR, Sound.Ding);
+Alert(BuySig2 and useAlerts2, "Buy Signal", Alert.BAR, Sound.Ding);
+
+#Plot BuySig3 = if (!isLong[1] and PLBuySignal3 and showSignals3 and LongTrades3) then 1 else 0;
+
+#plot Buy_Big = if (BuySig or buysig2  or BuySig2[1] or buysig3 or BuySig3[2] and (BuySig2 or BuySig2[1] or BuySig2[2])) and (BuySig3 or BuySig3[1] or BuySig3[2]) then 1 else 0;
+#Buy_Big.AssignValueColor(Color.magenta);
+#Buy_Big.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+#Buy_Big.SetLineWeight(5);
+#addverticalLine(Buy_Big,"",Color.green);
+
+#plot Buy_Big2 = if (BuySig or buysig2  or BuySig2[1] or buysig3 or BuySig3[2] and (BuySig2 or BuySig2[1] or BuySig2[2])) or (BuySig3 or BuySig3[1] or BuySig3[2]) then 1 else 0;
+#Buy_Big2.AssignValueColor(Color.gray);
+#Buy_Big2.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+#Buy_Big2.SetLineWeight(5);
+#addverticalLine(Buy_Big2,"",Color.light_Green);
+# If not already short and get a PLSellSignal
+def SellSig = if (((isLong[1] and ShortTrades) or (isFlat[1] and ShortTrades)) and PLSellSignal and showSignals) then 1 else 0;
+#SellSig.AssignValueColor(Color.cyan);
+#SellSig.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+#SellSig.SetLineWeight(1);
+def Sellsigbn = if SellSig then bn else SellSigbn[1];
+#addverticalLine(Sellsig,"",Color.red);
+
+###################################################################################################################################
+def SellSig2 = if (((isLong2[1] and ShortTrades2) or (isFlat2[1] and ShortTrades2)) and PLSellSignal2 and showSignals2)then 1 else 0;
+#SellSig2.AssignValueColor(Color.white);
+#SellSig2.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+#SellSig2.SetLineWeight(1);
+def Sellsig2bn = if SellSig2 then bn else SellSig2bn[1];
+
+Alert(BuySig3 and useAlerts3, "Buy Signal", Alert.BAR, Sound.Ding);
+Alert(BuySig3 and useAlerts3, "Buy Signal", Alert.BAR, Sound.Ding);
+
+def SellSig3 = if (((isLong3[1] and ShortTrades3) or (isFlat3[1] and ShortTrades3)) and PLSellSignal3 and showSignals3) then 1 else 0;
+#SellSig3.AssignValueColor(Color.orange);
+#SellSig3.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+#SellSig3.SetLineWeight(1);
+def Sellsig3bn = if SellSig3 then bn else SellSig3bn[1];
+
+def Sell = if (SellSig or SellSig2 or SellSig3) then 1 else 0;
+#Sell.AssignValueColor(Color.Magenta);
+#Sell.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+#Sell.SetLineWeight(1);
+
+def Hide_Sell = if Sell and (Sell[1] or sell[2] or sell[3] or sell[4]) then 0 else 1;
+def Hide_Buy = if Buy and (Buy[1] or Buy[2] or Buy[3] or Buy[4]) then 0 else 1;
+
+plot Sell_1 = if (Sell) and (Hide_Sell == 1) then 1 else 0;
+Sell_1.AssignValueColor(Color.cyan);
+Sell_1.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+Sell_1.SetLineWeight(1);
+
+plot Buy_1 = if (Buy) and (Hide_Buy == 1) then 1 else 0;
+Buy_1.AssignValueColor(Color.cyan);
+Buy_1.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+Buy_1.SetLineWeight(1);
+
+###################################################################################################################################
+
+
+#addchartbubble(BuySig and usealerts,low, "TS", Color.Light_Green,no);
+#addchartbubble(SellSig and usealerts,High, "TS", Color.red,no);
+Alert(SellSig and useAlerts, "Sell Signal", Alert.BAR, Sound.Ding);
+Alert(SellSig and useAlerts, "Sell Signal", Alert.BAR, Sound.Ding);
+
+#If not already short and get a PLSellSignal2
+
+
+#addchartbubble(BuySig2 and usealerts2,low, "TS", Color.Light_Green,no);
+#addchartbubble(SellSig2 and usealerts2,High, "TS", Color.red,no);
+#Alert(SellSig2 and useAlerts2, "Sell Signal", Alert
+Alert(SellSig2 and useAlerts2, "Sell Signal2", Alert.BAR, Sound.Ding);
+Alert(SellSig2 and useAlerts2, "Sell Signal2", Alert.BAR, Sound.Ding);
+
+
+#addchartbubble(BuySig3 and usealerts3,low, "TS", Color.Light_Green,no);
+#addchartbubble(SellSig3 and usealerts3,High, "TS", Color.red,no);
+#Alert(SellSig3 and useAlerts3, "Sell Signal", Alert
+Alert(SellSig3 and useAlerts3, "Sell Signal3", Alert.BAR, Sound.Ding);
+Alert(SellSig3 and useAlerts3, "Sell Signal3", Alert.BAR, Sound.Ding);
+
+#plot Sell_Big = if (SellSig and (SellSig2 or SellSig2[1] or SellSig2[2])) and (SellSig3 or SellSig3[1] or SellSig3[2]) then 1 else 0;
+#Sell_Big.AssignValueColor(Color.magenta);
+#Sell_Big.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+#Sell_Big.SetLineWeight(5);
+#addverticalLine(Sell_Big,"",Color.red);
+
+#plot Sell_Big2 = if (SellSig and (SellSig2 or SellSig2[1] or SellSig[2])) or (SellSig3 or SellSig3[1] or SellSig3[2]) then 1 else 0;
+#Sell_Big2.AssignValueColor(Color.gray);
+#Sell_Big2.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+#Sell_Big2.SetLineWeight(5);
+#addverticalLine(Sell_Big2,"",Color.light_red);
+
+#plot Sell_Big3 = if (SellSig and (SellSig2 or SellSig2[1] or SellSig2[2])) and (SellSig3 or SellSig3[1] or SellSig3[2]) then 1 else 0;
+#Sell_Big3.AssignValueColor(Color.magenta);
+#Sell_Big3.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+#Sell_Big3.SetLineWeight(5);
+#addverticalLine(Sell_Big3,"",Color.red);
+###################################################################################################################################
+
+
+###################################################################################################################################
+
+# If long and get a PLBuyStop
+plot BuyStpSig = if (PLBuyStop and isLong[1] and showSignals and useStops) or (isLong[1] and PLMktStop) or (isLong[1] and PLSellSignal and !ShortTrades) then 1 else 0;
+BuyStpSig.AssignValueColor(Color.LIGHT_GRAY);
+BuyStpSig.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+BuyStpSig.SetLineWeight(1);
+
+Alert(BuyStpSig and useAlerts, "Buy Stop Signal", Alert.BAR, Sound.Ding);
+Alert(BuyStpSig and useAlerts, "Buy Stop Signal", Alert.BAR, Sound.Ding);
+
+#If long and get a PLBuyStop
+plot BuyStpSig2 = if (PLBuyStop2 and isLong2[1] and showSignals2 and useStops2) or (isLong2[1] and PLMktStop2) or (isLong2[1] and PLSellSignal2 and !ShortTrades2) then 1 else 0;
+BuyStpSig2.AssignValueColor(Color.LIGHT_GRAY);
+BuyStpSig2.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+BuyStpSig2.SetLineWeight(1);
+
+Alert(BuyStpSig2 and useAlerts2, "Buy Stop Signal", Alert.BAR, Sound.Ding);
+Alert(BuyStpSig2 and useAlerts2, "Buy Stop Signal", Alert.BAR, Sound.Ding);
+
+plot BuyStpSig3 = if (PLBuyStop3 and isLong3[1] and showSignals3 and useStops3) or (isLong3[1] and PLMktStop3) or (isLong3[1] and PLSellSignal3 and !ShortTrades3) then 1 else 0;
+BuyStpSig3.AssignValueColor(Color.LIGHT_GRAY);
+BuyStpSig3.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_DOWN);
+BuyStpSig3.SetLineWeight(1);
+
+Alert(BuyStpSig3 and useAlerts3, "Buy Stop Signal", Alert.BAR, Sound.Ding);
+Alert(BuyStpSig3 and useAlerts3, "Buy Stop Signal", Alert.BAR, Sound.Ding);
+
+###################################################################################################################################
+
+
+###################################################################################################################################
+
+# If short and get a PLSellStop
+plot SellStpSig = if (PLSellStop and isShort[1] and showSignals and useStops) or (isShort[1] and PLMktStop) or (isShort[1] and PLBuySignal and !LongTrades) then 1 else 0;
+SellStpSig.AssignValueColor(Color.LIGHT_GRAY);
+SellStpSig.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+SellStpSig.SetLineWeight(1);
+
+Alert(SellStpSig and useAlerts, "Sell Stop Signal", Alert.BAR, Sound.Ding);
+Alert(SellStpSig and useAlerts, "Sell Stop Signal", Alert.BAR, Sound.Ding);
+
+#If short and get a PLSellStop
+plot SellStpSig2 = if (PLSellStop2 and isShort2[1] and showSignals2 and useStops2) or (isShort2[1] and PLMktStop2) or (isShort2[1] and PLBuySignal2 and !LongTrades2) then 1 else 0;
+SellStpSig2.AssignValueColor(Color.LIGHT_GRAY);
+SellStpSig2.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+SellStpSig2.SetLineWeight(1);
+
+Alert(SellStpSig2 and useAlerts2, "Sell Stop Signal", Alert.BAR, Sound.Ding);
+Alert(SellStpSig2 and useAlerts2, "Sell Stop Signal", Alert.BAR, Sound.Ding);
+
+plot SellStpSig3 = if (PLSellStop3 and isShort3[1] and showSignals3 and useStops3) or (isShort3[1] and PLMktStop3) or (isShort3[1] and PLBuySignal3 and !LongTrades3) then 1 else 0;
+SellStpSig3.AssignValueColor(Color.LIGHT_GRAY);
+SellStpSig3.SetPaintingStrategy(PaintingStrategy.BOOLEAN_ARROW_UP);
+SellStpSig3.SetLineWeight(1);
+
+Alert(SellStpSig3 and useAlerts3, "Sell Stop Signal", Alert.BAR, Sound.Ding);
+Alert(SellStpSig3 and useAlerts3, "Sell Stop Signal", Alert.BAR, Sound.Ding);
+
+###################################################################################################################################
+
+
+###################################################################################################################################
+
+#######################################
+##  Orders
+#######################################
+
+def isOrder = if ((isFlat[1] and (BuySig and LongTrades) or (SellSig and ShortTrades)) or (isLong[1] and BuyStpSig or (SellSig and ShortTrades)) or (isShort[1] and SellStpSig or (BuySig and LongTrades))) then 1 else 0 ;
+# If there is an order, then the price is the next days close
+def orderPrice = if (isOrder and ((BuySig and LongTrades) or (SellSig and ShortTrades))) then close else orderPrice[1];
+
+def orderCount = CompoundValue(1, if IsNaN(isOrder) or BarNumber() == 1 then 0 else if (BuySig or SellSig) then orderCount[1] + 1 else orderCount[1], 0);
+
+def isOrder2 = if ((isFlat2[1] and (BuySig2 and LongTrades2) or (SellSig2 and ShortTrades2)) or (isLong2[1] and BuyStpSig2 or (SellSig2 and ShortTrades2)) or (isShort2[1] and SellStpSig2 or (BuySig2 and LongTrades2))) then 1 else 0 ;
+
+#If there is an order, then the price is the next days close
+def orderPrice2 = if (isOrder2 and ((BuySig2 and LongTrades2) or (SellSig2 and ShortTrades2))) then close2 else orderPrice2[1];
+
+def orderCount2 = CompoundValue(1, if IsNaN(isOrder2) or BarNumber() == 1 then 0 else if (BuySig2 or SellSig2) then orderCount2[1] + 1 else orderCount2[1], 0);
+
+def isOrder3 = if ((isFlat3[1] and (BuySig3 and LongTrades3) or (SellSig3 and ShortTrades3)) or (isLong3[1] and BuyStpSig3 or (SellSig3 and ShortTrades3)) or (isShort3[1] and SellStpSig3 or (BuySig3 and LongTrades3))) then 1 else 0 ;
+
+#If there is an order, then the price is the next days close
+def orderPrice3 = if (isOrder3 and ((BuySig3 and LongTrades3) or (SellSig3 and ShortTrades3))) then close3 else orderPrice3[1];
+
+def orderCount3 = CompoundValue(1, if IsNaN(isOrder3) or BarNumber() == 1 then 0 else if (BuySig3 or SellSig3) then orderCount3[1] + 1 else orderCount3[1], 0);
+
+#######################################
+##  Price and Profit
+#######################################
+
+def profitLoss;
+
+if (!isOrder or orderPrice[1] == 0) {
+    profitLoss = 0;
+} else if ((isOrder and isLong[1]) and (SellSig or BuyStpSig)) {
+    profitLoss = close - orderPrice[1];
+} else if ((isOrder and isShort[1]) and (BuySig or SellStpSig)) {
+    profitLoss = orderPrice[1] - close;
+} else {
+    profitLoss = 0;
+}
+
+def profitLoss2;
+
+if (!isOrder2 or orderPrice2[1] == 0) {
+profitLoss2 = 0;
+} else if ((isOrder2 and isLong2[1]) and (SellSig2 or BuyStpSig2)) {
+profitLoss2 = close2 - orderPrice2[1];
+} else if ((isOrder2 and isShort2[1]) and (BuySig2 or SellStpSig2)) {
+profitLoss2 = orderPrice2[1] - close2;
+} else {
+profitLoss2 = 0;
+}
+
+def profitLoss3;
+
+if (!isOrder3 or orderPrice3[1] == 0) {
+profitLoss3 = 0;
+} else if ((isOrder3 and isLong3[1]) and (SellSig3 or BuyStpSig3)) {
+profitLoss3 = close3 - orderPrice3[1];
+} else if ((isOrder3 and isShort3[1]) and (BuySig3 or SellStpSig3)) {
+profitLoss3 = orderPrice3[1] - close3;
+} else {
+profitLoss3 = 0;
+}
+
+# Total Profit or Loss
+def profitLossSum = CompoundValue(1, if IsNaN(isOrder)  or BarNumber() == 1 then 0 else if isOrder then profitLossSum[1] + profitLoss else profitLossSum[1], 0);
+
+#Total Profit or Loss
+def profitLossSum2 = CompoundValue(1, if IsNaN(isOrder2) or BarNumber() == 1 then 0 else if isOrder2 then profitLossSum2[1] + profitLoss2 else profitLossSum2[1], 0);
+
+#Total Profit or Loss
+def profitLossSum3 = CompoundValue(1, if IsNaN(isOrder3) or BarNumber() == 1 then 0 else if isOrder3 then profitLossSum3[1] + profitLoss3 else profitLossSum3[1], 0);
+
+# How many trades won or lost
+def profitWinners = CompoundValue(1, if IsNaN(profitWinners[1]) or BarNumber() == 1 then 0 else if isOrder and profitLoss > 0 then profitWinners[1] + 1 else profitWinners[1], 0);
+def profitLosers = CompoundValue(1, if IsNaN(profitLosers[1])  or BarNumber() == 1 then 0 else if isOrder and profitLoss < 0 then profitLosers[1] + 1 else profitLosers[1], 0);
+def profitPush = CompoundValue(1, if IsNaN(profitPush[1])  or BarNumber() == 1 then 0 else if isOrder and profitLoss == 0 then profitPush[1] + 1 else profitPush[1], 0);
+
+#How many trades won or lost
+def profitWinners2 = CompoundValue(1, if IsNaN(profitWinners2[1]) or BarNumber() == 1 then 0 else if isOrder2 and profitLoss2 > 0 then profitWinners2[1] + 1 else profitWinners2[1], 0);
+def profitLosers2 = CompoundValue(1, if IsNaN(profitLosers2[1]) or BarNumber() == 1 then 0 else if isOrder2 and profitLoss2 < 0 then profitLosers2[1] + 1 else profitLosers2[1], 0);
+def profitPush2 = CompoundValue(1, if IsNaN(profitPush2[1]) or BarNumber() == 1 then 0 else if isOrder2 and profitLoss2 == 0 then profitPush2[1] + 1 else profitPush2[1], 0);
+
+#How many trades won or lost
+def profitWinners3 = CompoundValue(1, if IsNaN(profitWinners3[1]) or BarNumber() == 1 then 0 else if isOrder3 and profitLoss3 > 0 then profitWinners3[1] + 1 else profitWinners3[1], 0);
+def profitLosers3 = CompoundValue(1, if IsNaN(profitLosers3[1]) or BarNumber() == 1 then 0 else if isOrder3 and profitLoss3 < 0 then profitLosers3[1] + 1 else profitLosers3[1], 0);
+def profitPush3 = CompoundValue(1, if IsNaN(profitPush3[1]) or BarNumber() == 1 then 0 else if isOrder3 and profitLoss3 == 0 then profitPush3[1] + 1 else profitPush3[1], 0);
+
+# Current Open Trade Profit or Loss
+def TradePL = if isLong then Round(((close - orderPrice) / TickSize()) * TickValue()) else if isShort then Round(((orderPrice - close) / TickSize()) * TickValue()) else 0;
+
+#Current Open Trade Profit or Loss
+def TradePL2 = if isLong2 then Round(((close2 - orderPrice2) / TickSize()) * TickValue()) else if isShort2 then Round(((orderPrice2 - close2) / TickSize()) * TickValue()) else 0;
+
+#Current Open Trade Profit or Loss
+def TradePL3 = if isLong3 then Round(((close3 - orderPrice3) / TickSize()) * TickValue()) else if isShort3 then Round(((orderPrice3 - close3) / TickSize()) * TickValue()) else 0;
+
+# Convert to actual dollars based on Tick Value for bubbles
+def dollarProfitLoss = if orderPrice[1] == 0 or IsNaN(orderPrice[1]) then 0 else Round((profitLoss / TickSize()) * TickValue());
+
+#Convert to actual dollars based on Tick Value for bubbles
+def dollarProfitLoss2 = if orderPrice2[1] == 0 or IsNaN(orderPrice2[1]) then 0 else Round((profitLoss2 / TickSize()) * TickValue());
+
+#Convert to actual dollars based on Tick Value for bubbles
+def dollarProfitLoss3 = if orderPrice3[1] == 0 or IsNaN(orderPrice3[1]) then 0 else Round((profitLoss3 / TickSize()) * TickValue());
+
+# Closed Orders dollar P/L
+def dollarPLSum = Round((profitLossSum / TickSize()) * TickValue());
+
+#Closed Orders dollar P/L
+def dollarPLSum2 = Round((profitLossSum2 / TickSize()) * TickValue());
+
+#Closed Orders dollar P/L
+def dollarPLSum3 = Round((profitLossSum3 / TickSize()) * TickValue());
+
+# Split profits or losses by long and short trades
+def profitLong = CompoundValue(1, if IsNaN(profitLong[1])  or BarNumber() == 1 then 0 else if isOrder and isLong[1] then profitLong[1] + dollarProfitLoss else profitLong[1], 0);
+def profitLong2 = CompoundValue(1, if IsNaN(profitLong2[1]) or BarNumber() == 1 then 0 else if isOrder2 and isLong2[1] then profitLong2[1] + dollarProfitLoss2 else profitLong2[1],0);
+def profitLong3 = CompoundValue(1, if IsNaN(profitLong3[1]) or BarNumber() == 1 then 0 else if isOrder3 and isLong3[1] then profitLong3[1] + dollarProfitLoss3 else profitLong3[1], 0);
+
+def profitShort = CompoundValue(1, if IsNaN(profitShort[1])  or BarNumber() == 1 then 0 else if isOrder and isShort[1] then profitShort[1] + dollarProfitLoss else profitShort[1],0);
+def profitShort2 = CompoundValue(1, if IsNaN(profitShort2[1]) or BarNumber() == 1 then 0 else if isOrder2 and isShort2[1] then profitShort2[1] + dollarProfitLoss2 else profitShort2[1], 0);
+def profitShort3 = CompoundValue(1, if IsNaN(profitShort3[1]) or BarNumber() == 1 then 0 else if isOrder3 and isShort3[1] then profitShort3[1] + dollarProfitLoss3 else profitShort3[1], 0);
+
+def countLong = CompoundValue(1, if IsNaN(countLong[1])  or BarNumber() == 1 then 0 else if isOrder and isLong[1] then countLong[1] + 1 else countLong[1], 0);
+def countLong2 = CompoundValue(1, if IsNaN(countLong2[1]) or BarNumber() == 1 then 0 else if isOrder2 and isLong2[1] then countLong2[1] + 1 else countLong2[1], 0);
+def countLong3 = CompoundValue(1, if IsNaN(countLong3[1]) or BarNumber() == 1 then 0 else if isOrder3 and isLong3[1] then countLong3[1] + 1 else countLong3[1], 0);
+
+def countShort = CompoundValue(1, if IsNaN(countShort[1])  or BarNumber() == 1 then 0 else if isOrder and isShort[1] then countShort[1] + 1 else countShort[1], 0);
+def countShort2 = CompoundValue(1, if IsNaN(countShort2[1]) or BarNumber() == 1 then 0 else if isOrder2 and isShort2[1] then countShort2[1] + 1 else countShort2[1], 0);
+def countShort3 = CompoundValue(1, if IsNaN(countShort3[1]) or BarNumber() == 1 then 0 else if isOrder3 and isShort3[1] then countShort3[1] + 1 else countShort3[1], 0); #What was the biggest winning and losing trade
+
+# What was the biggest winning and losing trade
+def biggestWin = CompoundValue(1, if IsNaN(biggestWin[1]) or BarNumber() == 1 then 0 else if isOrder and (dollarProfitLoss > 0) and (dollarProfitLoss > biggestWin[1]) then dollarProfitLoss else biggestWin[1], 0);
+def biggestLoss = CompoundValue(1, if IsNaN(biggestLoss[1]) or BarNumber() == 1 then 0 else if isOrder and (dollarProfitLoss < 0) and (dollarProfitLoss < biggestLoss[1]) then dollarProfitLoss else biggestLoss[1], 0);
+
+def biggestWin2 = CompoundValue(1, if IsNaN(biggestWin2[1]) or BarNumber() == 1 then 0 else if isOrder2 and (dollarProfitLoss2 > 0) and (dollarProfitLoss2 > biggestWin2[1]) then dollarProfitLoss2 else biggestWin2[1], 0);
+def biggestLoss2 = CompoundValue(1, if IsNaN(biggestLoss2[1]) or BarNumber() == 1 then 0 else if isOrder2 and (dollarProfitLoss2 < 0) and (dollarProfitLoss2 < biggestLoss2[1]) then dollarProfitLoss2 else biggestLoss2[1], 0);
+
+def biggestWin3 = CompoundValue(1, if IsNaN(biggestWin3[1]) or BarNumber() == 1 then 0 else if isOrder3 and (dollarProfitLoss3 > 0) and (dollarProfitLoss3 > biggestWin3[1]) then dollarProfitLoss3 else biggestWin3[1], 0);
+def biggestLoss3 = CompoundValue(1, if IsNaN(biggestLoss3[1]) or BarNumber() == 1 then 0 else if isOrder3 and (dollarProfitLoss3 < 0) and (dollarProfitLoss3 < biggestLoss3[1]) then dollarProfitLoss3 else biggestLoss3[1], 0);
+
+def ClosedTradeCount = if (isLong or isShort) then orderCount - 1 else orderCount;
+def ClosedTradeCount2 = if (isLong2 or isShort2) then orderCount2 - 1 else orderCount2;
+def ClosedTradeCount3 = if (isLong3 or isShort3) then orderCount3 - 1 else orderCount3;
+
+def OpenTrades = if (isLong or isShort) then 1 else 0;
+def OpenTrades2 = if (isLong2 or isShort2) then 1 else 0;
+def OpenTrades3 = if (isLong3 or isShort3) then 1 else 0;
+
+# What percent were winners
+def PCTWin = if (OpenTrades and (TradePL < 0)) then Round((profitWinners / (ClosedTradeCount + 1)) * 100, 2)
+else if (OpenTrades and (TradePL > 0)) then Round(((profitWinners + 1) / (ClosedTradeCount + 1)) * 100, 2)
+else Round(((profitWinners) / (ClosedTradeCount)) * 100, 2) ;
+
+#What percent were winners
+def PCTWin2 = if (OpenTrades2 and (TradePL2 < 0)) then Round((profitWinners2 / (ClosedTradeCount2 + 1)) * 100, 2)
+else if (OpenTrades2 and (TradePL2 > 0)) then Round(((profitWinners2 + 1) / (ClosedTradeCount2 + 1)) * 100, 2)
+else Round(((profitWinners2) / (ClosedTradeCount2)) * 100, 2) ;
+
+#What percent were winners
+def PCTWin3 = if (OpenTrades3 and (TradePL3 < 0)) then Round((profitWinners3 / (ClosedTradeCount3 + 1)) * 100, 2)
+else if (OpenTrades3 and (TradePL3 > 0)) then Round(((profitWinners3 + 1) / (ClosedTradeCount3 + 1)) * 100, 2)
+else Round(((profitWinners3) / (ClosedTradeCount3)) * 100, 2) ;
+
+# Average trade
+def avgTrade = if (OpenTrades and (TradePL < 0)) then Round(((dollarPLSum - TradePL) / (ClosedTradeCount + 1)), 2)
+else if (OpenTrades and (TradePL > 0)) then Round(((dollarPLSum + TradePL) / (ClosedTradeCount + 1)), 2)
+else Round(((dollarPLSum) / (ClosedTradeCount)), 2) ;
+
+#Average trade
+def avgTrade2 = if (OpenTrades2 and (TradePL < 0)) then Round(((dollarPLSum2 - TradePL2) / (ClosedTradeCount2 + 1)), 2)
+else if (OpenTrades2 and (TradePL2 > 0)) then Round(((dollarPLSum2 + TradePL2) / (ClosedTradeCount2 + 1)), 2)
+else Round(((dollarPLSum2) / (ClosedTradeCount2)), 2) ;
+
+#Average trade
+def avgTrade3 = if (OpenTrades3 and (TradePL < 0)) then Round(((dollarPLSum3 - TradePL3) / (ClosedTradeCount3 + 1)), 2)
+else if (OpenTrades3 and (TradePL3 > 0)) then Round(((dollarPLSum3 + TradePL3) / (ClosedTradeCount3 + 1)), 2)
+else Round(((dollarPLSum3) / (ClosedTradeCount3)), 2) ;
+
+#######################################
+##  Create Labels
+#######################################
+
+
+def trade_day = tradeDaytimeOnly;
+def trade_day_2 = tradeDaytimeOnly2;
+def trade_day_3 = tradeDaytimeOnly3;
+
+AddLabel(Market_Open_Lbl and isIntraDay, if MarketOpen then "Market Open" else "Market Closed", Color.WHITE);
+AddLabel(Tick_Size_Lbl, GetSymbol() + " Tick Size: " + TickSize() + " Value: " + TickValue(), Color.WHITE);
+AddLabel(Long_Short_Lbl and (LongTrades and ShortTrades), "Long+Short Trades", Color.WHITE);
+AddLabel(Long_Short_Lbl and (LongTrades and !ShortTrades), "Long Trades Only", Color.WHITE);
+AddLabel(Long_Short_Lbl and (!LongTrades and ShortTrades), "Short Trades Only", Color.WHITE);
+AddLabel(Closed_Orders_Lbl, "CO: " + ClosedTradeCount ,
+if dollarPLSum > 0 then Color.GREEN else
+if dollarPLSum < 0 then Color.RED else Color.GRAY);
+AddLabel(if !IsNaN(orderPrice) and PL_Lbl then 1 else 0, "Closed+Open P/L: " + AsDollars(TradePL + dollarPLSum),
+if ((TradePL + dollarPLSum) > 0) then Color.GREEN else
+if ((TradePL + dollarPLSum) < 0) then Color.RED else Color.GRAY);
+AddLabel(Avg_Per_Lbl, "Avg per Trade: " + AsDollars(avgTrade),
+if avgTrade > 0 then Color.GREEN else
+if avgTrade < 0 then Color.RED else Color.GRAY);
+
+AddLabel(Max_Lbl, "MaxUp: " + AsDollars(biggestWin) + " MaxDown: " + AsDollars(biggestLoss), Color.WHITE);
+AddLabel(Profit_Lbl, "Long Profit: " + AsDollars(profitLong),
+if profitLong > 0 then Color.GREEN else
+if profitLong < 0 then Color.RED else Color.GRAY);
+AddLabel(Profit_Lbl, "Short Profit: " + AsDollars(profitShort),
+if profitShort > 0 then Color.GREEN else
+if profitShort < 0 then Color.RED else Color.GRAY);
+AddLabel(if !IsNaN(CurrentPosition) and Open_Trades_Lbl and OpenTrades then 1 else 0, "Open: " +
+(if isLong then "Bought" else "Sold") + " @ " + orderPrice, Color.WHITE);
+AddLabel(if !IsNaN(orderPrice) and Open_Trades_Lbl and OpenTrades then 1 else 0, "Open Trade P/L: " + AsDollars(TradePL),
+if (TradePL > 0) then Color.GREEN else
+if (TradePL < 0) then Color.RED else Color.GRAY);
+AddLabel(Profit_Pct_Lbl, "Profit Percentile: " + aspercent(TradePL/BiggestWin),
+if (TradePL > 0) then Color.GREEN else
+if (TradePL < 0) then Color.RED else Color.GRAY);
+
+AddLabel(showLabels,(if trade_day then "DT | " else "") + "WINS: " + PCTWin + "%",
+if PCTWin > 50 then Color.GREEN else
+if PCTWin > 40 then Color.YELLOW else Color.GRAY);
+
+AddLabel(Market_Open_Lbl2 and isIntraDay2, if MarketOpen2 then "Market Open" else "Market Closed", Color.WHITE);
+AddLabel(Tick_Size_Lbl2, GetSymbol() + " Tick Size: " + TickSize() + " Value: " + TickValue(), Color.WHITE);
+AddLabel(Long_Short_Lbl2 and (LongTrades2 and ShortTrades2), "Long+Short Trades", Color.WHITE);
+AddLabel(Long_Short_Lbl2 and (LongTrades2 and !ShortTrades2), "Long Trades Only", Color.WHITE);
+AddLabel(Long_Short_Lbl2 and (!LongTrades2 and ShortTrades2), "Short Trades Only", Color.WHITE);
+AddLabel(Closed_Orders_Lbl2, "CO: " + ClosedTradeCount2 ,
+if dollarPLSum2 > 0 then Color.GREEN else
+if dollarPLSum2 < 0 then Color.RED else Color.GRAY);
+AddLabel(if !IsNaN(orderPrice2) and PL_Lbl2 then 1 else 0, "Closed+Open P/L: " + AsDollars(TradePL2 + dollarPLSum2),
+if ((TradePL2 + dollarPLSum2) > 0) then Color.GREEN else
+if ((TradePL2 + dollarPLSum2) < 0) then Color.RED else Color.GRAY);
+AddLabel(Avg_Per_Lbl2, "Avg per Trade: " + AsDollars(avgTrade2),
+if avgTrade2 > 0 then Color.GREEN else
+if avgTrade2 < 0 then Color.RED else Color.GRAY);
+
+AddLabel(Max_Lbl2, "MaxUp: " + AsDollars(biggestWin2) + " MaxDown: " + AsDollars(biggestLoss2), Color.WHITE);
+AddLabel(Profit_Lbl2, "Long Profit: " + AsDollars(profitLong2),
+if profitLong2 > 0 then Color.GREEN else
+if profitLong2 < 0 then Color.RED else Color.GRAY);
+AddLabel(Profit_Lbl2, "Short Profit: " + AsDollars(profitShort2),
+if profitShort2 > 0 then Color.GREEN else
+if profitShort2 < 0 then Color.RED else Color.GRAY);
+AddLabel(if !IsNaN(CurrentPosition2) and Open_Trades_Lbl2 and OpenTrades2 then 1 else 0, "Open: " +
+(if isLong2 then "Bought" else "Sold") + " @ " + orderPrice2, Color.WHITE);
+AddLabel(if !IsNaN(orderPrice2) and Open_Trades_Lbl2 and OpenTrades2 then 1 else 0, "Open Trade P/L: " + AsDollars(TradePL2),
+if (TradePL2 > 0) then Color.GREEN else
+if (TradePL2 < 0) then Color.RED else Color.GRAY);
+AddLabel(Profit_Pct_Lbl2, "Profit Percentile: " + aspercent(TradePL2/BiggestWin2),
+if (TradePL2 > 0) then Color.GREEN else
+if (TradePL2 < 0) then Color.RED else Color.GRAY);
+
+def ag2_Label_min =if (agperiod2 == aggregationPeriod.MIN) then 1 else 0;
+def ag2_Label_two_min =if (agperiod2 == aggregationPeriod.TWO_MIN) then 1 else 0;
+def ag2_Label_three_min =if (agperiod2 == aggregationPeriod.THREE_MIN) then 1 else 0;
+def ag2_Label_Five_min =if (agperiod2 == aggregationPeriod.FIVE_MIN) then 1 else 0;
+def ag2_Label_Ten_min =if (agperiod2 == aggregationPeriod.TEN_MIN) then 1 else 0;
+def ag2_Label_fifteen_min =if (agperiod2 == aggregationPeriod.FIFTEEN_MIN) then 1 else 0;
+def ag2_Label_thirty_min =if (agperiod2 == aggregationPeriod.THIRTY_MIN) then 1 else 0;
+def ag2_Label_Hour =if (agperiod2 == aggregationPeriod.HOUR) then 1 else 0;
+def ag2_Label_two_Hour =if (agperiod2 == aggregationPeriod.TWO_HOURS) then 1 else 0;
+def ag2_Label_Four_Hour =if (agperiod2 == aggregationPeriod.FOUR_HOURS) then 1 else 0;
+def ag2_Label_Day =if (agperiod2 == aggregationPeriod.Day) then 1 else 0;
+def ag2_Label_week =if (agperiod2 == aggregationPeriod.week) then 1 else 0;
+def ag2_Label_month =if (agperiod2 == aggregationPeriod.month) then 1 else 0;
+
+AddLabel(showLabels2,if ag2_Label_min         and trade_day_2 then "1 min | DT | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_min         then "1 min | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_two_min     and trade_day_2 then "2 min | DT | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_two_min     then "2 min | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_three_min   and trade_day_2 then "3 min | DT | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_three_min   then "3 min | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_five_min    and trade_day_2 then "5 min | DT | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_five_min    then "5 min | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_ten_min     and trade_day_2 then "10 min | DT | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_ten_min     then "10 min | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_fifteen_min and trade_day_2 then "15 min | DT | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_fifteen_min then "15 min | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_thirty_min  and trade_day_2 then "30 min | DT | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_thirty_min  then "30 min | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_Hour        and trade_day_2 then "1 hour | DT | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_Hour        then "1 hour | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_two_Hour    and trade_day_2 then "2 hour | DT | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_two_Hour    then "2 hour | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_four_Hour   and trade_day_2 then "4 hour | DT | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_four_Hour   then "4 hour | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_day         and trade_day_2 then "Day | DT | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_day         then "Day | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_week        and trade_day_2 then "Week | DT | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_week        then "Week | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_month       and trade_day_2 then "Month | DT | WINS AG2: "+ PCTWin2 + "%" else
+                     if ag2_Label_month       then "Month | WINS AG2: "+ PCTWin2 + "%" else "",
+                     if PCTWin2 > 50 then Color.GREEN else if PCTWin2 > 40 then Color.YELLOW else Color.GRAY);
+
+AddLabel(Show_auto_Skip_label,if AutoAgg == no then "Manual AG2" else
+                         if AutoAgg == yes and ag_skip == yes then "Auto AG2 | AG Skip" else
+                         if AutoAgg == yes and ag_skip == no then "Auto AG2" else "", Color.Gray);
+
+AddLabel(Market_Open_Lbl3 and isIntraDay3, if MarketOpen3 then "Market Open" else "Market Closed", Color.WHITE);
+AddLabel(Tick_Size_Lbl3, GetSymbol() + " Tick Size: " + TickSize() + " Value: " + TickValue(), Color.WHITE);
+AddLabel(Long_Short_Lbl3 and (LongTrades3 and ShortTrades3), "Long+Short Trades", Color.WHITE);
+AddLabel(Long_Short_Lbl3 and (LongTrades3 and !ShortTrades3), "Long Trades Only", Color.WHITE);
+AddLabel(Long_Short_Lbl3 and (!LongTrades3 and ShortTrades3), "Short Trades Only", Color.WHITE);
+AddLabel(Closed_Orders_Lbl3, "CO: " + ClosedTradeCount3 ,
+if dollarPLSum3 > 0 then Color.GREEN else
+if dollarPLSum3 < 0 then Color.RED else Color.GRAY);
+AddLabel(if !IsNaN(orderPrice3) and PL_Lbl3 then 1 else 0, "Closed+Open P/L: " + AsDollars(TradePL3 + dollarPLSum3),
+if ((TradePL3 + dollarPLSum3) > 0) then Color.GREEN else
+if ((TradePL3 + dollarPLSum3) < 0) then Color.RED else Color.GRAY);
+AddLabel(Avg_Per_Lbl3, "Avg per Trade: " + AsDollars(avgTrade3),
+if avgTrade3 > 0 then Color.GREEN else
+if avgTrade3 < 0 then Color.RED else Color.GRAY);
+
+AddLabel(Max_Lbl3, "MaxUp: " + AsDollars(biggestWin3) + " MaxDown: " + AsDollars(biggestLoss3), Color.WHITE);
+AddLabel(Profit_Lbl3, "Long Profit: " + AsDollars(profitLong3),
+if profitLong3 > 0 then Color.GREEN else
+if profitLong3 < 0 then Color.RED else Color.GRAY);
+AddLabel(Profit_Lbl3, "Short Profit: " + AsDollars(profitShort3),
+if profitShort3 > 0 then Color.GREEN else
+if profitShort3 < 0 then Color.RED else Color.GRAY);
+AddLabel(if !IsNaN(CurrentPosition3) and Open_Trades_Lbl3 and OpenTrades3 then 1 else 0, "Open: " +
+(if isLong3 then "Bought" else "Sold") + " @ " + orderPrice3, Color.WHITE);
+AddLabel(if !IsNaN(orderPrice3) and Open_Trades_Lbl3 and OpenTrades3 then 1 else 0, "Open Trade P/L: " + AsDollars(TradePL3),
+if (TradePL3 > 0) then Color.GREEN else
+if (TradePL3 < 0) then Color.RED else Color.GRAY);
+AddLabel(Profit_Pct_Lbl3, "Profit Percentile: " + aspercent(TradePL3/BiggestWin3),
+if (TradePL3 > 0) then Color.GREEN else
+if (TradePL3 < 0) then Color.RED else Color.GRAY);;
+
+def ag3_Label_min =if (agperiod3 == aggregationPeriod.MIN) then 1 else 0;
+def ag3_Label_two_min =if (agperiod3 == aggregationPeriod.TWO_MIN) then 1 else 0;
+def ag3_Label_three_min =if (agperiod3 == aggregationPeriod.THREE_MIN) then 1 else 0;
+def ag3_Label_Five_min =if (agperiod3 == aggregationPeriod.FIVE_MIN) then 1 else 0;
+def ag3_Label_Ten_min =if (agperiod3 == aggregationPeriod.TEN_MIN) then 1 else 0;
+def ag3_Label_fifteen_min =if (agperiod3 == aggregationPeriod.FIFTEEN_MIN) then 1 else 0;
+def ag3_Label_thirty_min =if (agperiod3 == aggregationPeriod.THIRTY_MIN) then 1 else 0;
+def ag3_Label_Hour =if (agperiod3 == aggregationPeriod.HOUR) then 1 else 0;
+def ag3_Label_two_Hour =if (agperiod3 == aggregationPeriod.TWO_HOURS) then 1 else 0;
+def ag3_Label_Four_Hour =if (agperiod3 == aggregationPeriod.FOUR_HOURS) then 1 else 0;
+def ag3_Label_Day =if (agperiod3 == aggregationPeriod.Day) then 1 else 0;
+def ag3_Label_week =if (agperiod3 == aggregationPeriod.week) then 1 else 0;
+def ag3_Label_month =if (agperiod3 == aggregationPeriod.month) then 1 else 0;
+
+AddLabel(showLabels3,if ag3_Label_min         and trade_day_3 then "1 min | DT | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_min         then "1 min | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_two_min     and trade_day_3 then "2 min | DT | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_two_min     then "2 min | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_three_min   and trade_day_3 then "3 min | DT | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_three_min   then "3 min | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_five_min    and trade_day_3 then "5 min | DT | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_five_min    then "5 min | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_ten_min     and trade_day_3 then "10 min | DT | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_ten_min     then "10 min | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_fifteen_min and trade_day_3 then "15 min | DT | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_fifteen_min then "15 min | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_thirty_min  and trade_day_3 then "30 min | DT | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_thirty_min  then "30 min | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_Hour        and trade_day_3 then "1 hour | DT | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_Hour        then "1 hour | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_two_Hour    and trade_day_3 then "2 hour | DT | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_two_Hour    then "2 hour | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_four_Hour   and trade_day_3 then "4 hour | DT | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_four_Hour   then "4 hour | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_day         and trade_day_3 then "Day | DT | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_day         then "Day | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_week        and trade_day_3 then "Week | DT | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_week        then "Week | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_month       and trade_day_3 then "Month | DT | WINS AG3: "+ PCTWin3 + "%" else
+                     if ag3_Label_month       then "Month | DT | WINS AG3: "+ PCTWin3 + "%" else "",
+                     if PCTWin3 > 50 then Color.GREEN else if PCTWin3 > 40 then Color.YELLOW else Color.GRAY);
+
+AddLabel(Show_auto_Skip_label,if AutoAgg2 == no then "Manual AG3" else
+                         if AutoAgg2 == yes and ag_skip2 == yes then "Auto AG3 | AG Skip" else
+                         if AutoAgg2 == yes and ag_skip2 == no then "Auto AG3" else "", Color.Gray);
+input timeframe = aggregationperiod.DAY;
+def Vol = volume(period = timeframe);
+def at_High = high(period = timeframe);
+def at_Open = open(period = timeframe);
+def at_Close = close(period = timeframe);
+def at_Low = low(period = timeframe);
+def Vol1 = volume(period = timeframe);
+def at_High1 = high(period = timeframe);
+def at_Open1 = open(period = timeframe);
+def at_Close1 = close(period = timeframe);
+def at_Low1 = low(period = timeframe);
+
+# Buy_Volume forumla is volume * (close_price minus low_price) / (High_price minus low_price)
+def Buy_Volume = RoundUp(Vol * (at_Close - at_Low) / (at_High - at_Low));
+def Buy_percent = RoundUp((Buy_Volume / Vol) * 100);
+#Buy_percent.SetPaintingStrategy(PaintingStrategy.LINE);
+#Buy_percent.SetLineWeight(1);
+#Buy_percent.SetDefaultColor(Color.GREEN);
+
+#Sell_Volume forumla is  volume * (High_price minus Close_price) / (High_price minus Low_price)
+def Sell_Volume = RoundDown(Vol1 * (at_High1 - at_Close1) / (at_High1 - at_Low1));
+def Sell_percent = RoundUp((Sell_Volume / Vol1) * 100);
+#input price = close;
+input length_BB = 10;
+input length_BB2 = 20;
+plot avg = ExpAverage(close(period = agperiod1), length_BB);
+#plot avg = ExpAverage((price), length);
+def height = avg - avg[length];
+avg.SetStyle(Curve.SHORT_DASH);
+avg.SetLineWeight(1);
+
+def UP = avg[1] < avg;
+def DOWN = avg[1] > avg;
+Avg.AssignValueColor(if UP then Color.LIGHT_GREEN else if DOWN then Color.RED else Color.YELLOW);
+
+plot avg2 = ExpAverage(close(period = agperiod2), length_BB);
+#plot avg2 = ExpAverage((price), length2);
+def height2 = avg2 - avg2[length_BB2];
+avg2.SetStyle(Curve.SHORT_DASH);
+avg2.SetLineWeight(1);
+
+def UP2 = avg2[1] < avg2;
+def DOWN2 = avg2[1] > avg2;
+Avg2.AssignValueColor(if UP2 then Color.LIGHT_GREEN else if DOWN2 then Color.RED else Color.YELLOW);
+
+
+def Condition1UP = avg > avg2;
+def Condition1DN = avg < avg2;
+
+def Condition2UP = Buy_percent > 50;
+def Condition2DN = Buy_percent < 50;
+
+def BullUP = Condition1UP + Condition2UP;
+def BearDN = Condition1DN + Condition2DN;
+
+def Bull_Bear = if Condition1UP==1 and Condition2UP == 1 then 1 else if Condition1DN == 1 and Condition2DN == 1 then -1 else 0;
+
+def Condition3UP = if buyerRegular then 1 else 0;
+def Condition3DN =  if sellerRegular then 1 else 0;
+
+def Condition4UP =  if buyerExtreme then 1 else 0;
+def Condition4DN =  if sellerExtreme then 1 else 0;
+
+def priceColor = if ((avg[1]<avg) and (avg2[1]<avg2)) then 1
+                 else if((avg[1]>avg) and (avg2[1]>avg2)) then -1
+                 else priceColor[1];
+
+
+input show_Vol_Labels = no;
+AddLabel(showlabels, if  Condition1UP==1 and Condition2UP == 1 and (Condition3UP == 1 or Condition4UP == 1) then "**CALLS ONLY!**"
+                else if  Condition1UP==1 and Condition2UP == 1 then "Very Bullish"
+                else if Condition1DN == 1 and Condition2DN == 1 and (Condition3DN == 1 or Condition4DN == 1) then "**PUTS ONLY!**"
+                else if Condition1DN == 1 and Condition2DN == 1 then "Very Bearish"
+                else if ((avg[1] > avg) and (avg > avg2) and (Buy_percent > 50)) then "Bullish Retracement"
+                else if ((avg[1] < avg) and (avg < avg2) and (Buy_percent < 50)) then "Bearish Retracement" + " | "
+                else "CHOP",
+                     if Condition1UP==1 and Condition2UP == 1 and (Condition3UP == 1 or Condition4UP == 1) then Color.cyan
+                else if Condition1DN == 1 and Condition2DN == 1 and (Condition3DN == 1 or Condition4DN == 1) then Color.Magenta
+                else if Condition1UP==1 and Condition2UP == 1 then Color.GREEN
+                else if Condition1DN == 1 and Condition2DN == 1 then Color.RED
+                else Color.orange);"
+
+</p>
+
+</body>
+</html>
